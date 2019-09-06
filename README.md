@@ -1,6 +1,5 @@
 # Woocommerce Price Change
-## With this repo you can increase price of all your products in a few clicks! 
-
+Simple script to bulk change prices of specific categories in WooCommerce
 
 ### How to use
 #### Setup
