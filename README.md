@@ -10,7 +10,7 @@ In `conf.php` you can set some values
 - `$INCREMENT_VALUE`
 #### Installation and Run
 Copy all this repo in your project and follow the path
-`mysite.com/WooCommerce-Price-Changer/price_increaser.php`
+`mysite.com/wc-price-changer/price_increaser.php`
 
 
 ---
