@@ -5,7 +5,7 @@ Simple script to bulk change prices of specific categories in WooCommerce
 #### Setup
 Create your `conf.php` file typing
 
-  cp conf-example.php conf.php
+    cp conf-example.php conf.php
 
 In `conf.php` you can set some values
 
