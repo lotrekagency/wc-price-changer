@@ -1,4 +1,4 @@
-# Woocommerce Price Change
+# WooCommerce Price Changer
 Simple script to bulk change prices of specific categories in WooCommerce
 
 ### How to use
