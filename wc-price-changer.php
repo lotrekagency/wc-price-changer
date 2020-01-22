@@ -6,12 +6,17 @@
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
-add_action('admin_menu', 'setup_menu');
 
-function setup_menu(){
+init_plugin();
+
+function init_plugin(){
+  add_action('admin_menu', 'setup_menu');
   if (!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
   }
+}
+
+function setup_menu(){
   if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))){
       add_submenu_page(
           'woocommerce',
@@ -21,7 +26,6 @@ function setup_menu(){
           'price-changer',
           'setup_page'
       );
-
   }
 }
 
