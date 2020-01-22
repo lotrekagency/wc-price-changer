@@ -95,7 +95,29 @@ class ProductList extends WP_List_Table {
     $this->set_pagination_args( array(
       'total_items' => $total_items
     ) );
+    $this->process_bulk_action();
     $this->items = $this->products;
+  }
+
+  function get_bulk_actions() {
+    $actions = array(
+      'price-change'    => 'Change price of selected products'
+    );
+    return $actions;
+  }
+
+  public function process_bulk_action() {
+    $action = $this->current_action();
+    switch ( $action ) {
+        case 'price-change':
+            wp_die( 'Cambio prezzi' );
+            break;
+        default:
+            // do nothing or something else
+            return;
+            break;
+    }
+    return;
   }
 }
 
