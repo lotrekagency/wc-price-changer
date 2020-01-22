@@ -8,7 +8,6 @@
  */
 
 init_plugin();
-$selected_products = array('prova',);
 
 function init_plugin(){
   add_action('admin_menu', 'setup_menu');
