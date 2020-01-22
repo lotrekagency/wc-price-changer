@@ -8,6 +8,7 @@
  */
 
 init_plugin();
+$selected_products = array('prova',);
 
 function init_plugin(){
   add_action('admin_menu', 'setup_menu');
@@ -57,7 +58,7 @@ class ProductList extends WP_List_Table {
 
   function column_cb($item) {
     return sprintf(
-        '<input type="checkbox" name="product[]" value="%s" />', $item->get_id()
+        '<input type="checkbox" name="products[]" value="%s" />', $item->get_id()
     );
 }
 
@@ -110,10 +111,9 @@ class ProductList extends WP_List_Table {
     $action = $this->current_action();
     switch ( $action ) {
         case 'price-change':
-            wp_die( 'Cambio prezzi' );
-            break;
+          setup_price_changer();
+          break;
         default:
-            // do nothing or something else
             return;
             break;
     }
@@ -132,5 +132,11 @@ function setup_page(){
 <?php
   $myListTable->display();
   echo '</form></div>';
+}
+
+function setup_price_changer(){
+  foreach($_POST['products'] as $item){
+    echo $item . '<br>';
+  }
 }
 ?>
