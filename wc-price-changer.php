@@ -11,6 +11,7 @@ init_plugin();
 
 function init_plugin(){
   add_action('admin_menu', 'setup_menu');
+  add_action('apply_price_changes', 'apply');
   if (!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
   }
@@ -106,20 +107,19 @@ class ProductList extends WP_List_Table {
     return $actions;
   }
 
-  public function process_bulk_action() {
+  function process_bulk_action() {
     $action = $this->current_action();
     switch ( $action ) {
-        case 'price-change':
-          setup_price_changer();
-          break;
-        default:
-            return;
-            break;
+      case 'price-change':
+        setup_price_changer();
+        break;
+      default:
+        return;
+        break;
     }
     return;
   }
 }
-
 
 function setup_page(){
   $myListTable = new ProductList();
@@ -130,12 +130,33 @@ function setup_page(){
     <input type="hidden" name="page" value="ttest_list_table">
 <?php
   $myListTable->display();
-  echo '</form></div>';
+?>
+  </form></div>
+<?php
 }
 
 function setup_price_changer(){
-  foreach($_POST['products'] as $item){
-    echo $item . '<br>';
-  }
+?>
+<style>
+.form-price-changer{
+  display: inline-block;
+  vertical-align: top;
+}
+</style>
+<div class="wrap form-price-changer">
+  <form method="post">
+    <label for="price-input">Insert price:</label>
+    <input type="text" name="price-input" id="price-input"></input>
+    <?php submit_button('Apply');?>
+  </form>
+</div>
+<?php
+}
+if(isset($_POST['submit']))
+{
+   apply();
+}
+function apply(){
+  echo 'example';
 }
 ?>
