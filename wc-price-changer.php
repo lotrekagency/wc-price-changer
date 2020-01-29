@@ -124,6 +124,12 @@ class ProductList extends WP_List_Table {
 function setup_page(){
   $myListTable = new ProductList();
   echo '<div class="wrap"><h1>WC Price Changer</h1>';
+  if(isset($_POST['submit']))
+  {
+    if(isset($_POST['products']) and isset($_POST['price-input'])){
+      change_prices($_POST['products'], $_POST['price-input']);
+    }
+  }
   $myListTable->prepare_items();
 ?>
   <form method="post">
@@ -131,8 +137,9 @@ function setup_page(){
 <?php
   $myListTable->display();
 ?>
-  </form></div>
+  </form>
 <?php
+  echo '</div>';
 }
 
 function setup_price_changer(){
@@ -146,17 +153,25 @@ function setup_price_changer(){
 <div class="wrap form-price-changer">
   <form method="post">
     <label for="price-input">Insert price:</label>
+    <?php
+      $products = $_POST['products'];
+      foreach($products as $product){
+        echo '<input type="hidden" name="products[]" value=' . $product . '>';
+      }
+    ?>
     <input type="text" name="price-input" id="price-input"></input>
     <?php submit_button('Apply');?>
   </form>
 </div>
 <?php
 }
-if(isset($_POST['submit']))
-{
-   apply();
-}
-function apply(){
-  echo 'example';
+
+function change_prices($ids, $price){
+  foreach ( $ids as $product ){
+    $product_retrieved = wc_get_product($product);
+    $product_retrieved->set_price($price);
+    $product_retrieved->set_regular_price($price);
+    $product_retrieved->save();
+  }
 }
 ?>
