@@ -29,8 +29,8 @@ function setup_menu(){
       );
       if(isset($_POST['submit']))
       {
-        if(isset($_POST['products']) and isset($_POST['price-input'])){
-          change_prices($_POST['products'], $_POST['price-input'], $_POST['choice-unit']);
+        if(isset($_POST['products']) and isset($_POST['value-input'])){
+          change_prices($_POST['products'], $_POST['value-input'], $_POST['choice-unit'], $_POST['submit-type']);
         }
       }
   }
@@ -223,7 +223,7 @@ protected function extra_tablenav( $which ) {
         setup_price_changer_unit();
         break;
       case 'price-change-percentage':
-        //setup_price_changer_percentage();
+        setup_price_changer_percentage();
         break;
       default:
         return;
@@ -264,7 +264,7 @@ function setup_price_changer_unit(){
     echo '<input type="hidden" name="products[]" value=' . $product . '>';
   }
 ?>
-    <label for="action-choice-unit">Tipo di modifica</label><br>
+    <label for="choice-unit">Tipo di modifica</label><br>
 
     <br><input type="radio" name="choice-unit" value="inc" checked>Incremento</input>
 
@@ -272,15 +272,54 @@ function setup_price_changer_unit(){
 
     <br><label for="price-input">Valore di modifica</label><br>
 
-    <input type="text" name="price-input" id="price-input"></input>
+    <input type="text" name="value-input" id="price-input"></input>
 
-    <?php submit_button('Apply');?>
+    <?php
+      echo '<input type="hidden" name="submit-type" value="unit">';
+      submit_button('Apply');
+    ?>
   </form>
 </div>
 <?php
 }
 
-function change_prices($ids, $value, $choice){
+function setup_price_changer_percentage(){
+  ?>
+  <style>
+  .form-price-changer{
+    display: inline-block;
+    vertical-align: top;
+  }
+  </style>
+  <div class="wrap form-price-changer">
+    <form method="post">
+  <?php
+    $products = $_POST['products'];
+    foreach($products as $product){
+      echo '<input type="hidden" name="products[]" value=' . $product . '>';
+    }
+  ?>
+      <label for="choice-unit">Tipo di modifica</label><br>
+
+      <br><input type="radio" name="choice-unit" value="inc" checked>Incremento</input>
+
+      <input type="radio" name="choice-unit" value="dec">Decremento</input><br>
+
+      <br><label for="price-input">Valore di modifica</label><br>
+
+      <input type="number" name="value-input" name="price-input" min="1" max="100">
+
+      <?php
+      echo '<input type="hidden" name="submit-type" value="percentage">';
+      submit_button('Apply');
+      ?>
+    </form>
+  </div>
+  <?php
+  }
+
+function change_prices($ids, $value, $choice, $operation){
+  //operation type => $operation
   if ($choice == 'dec'){
     $value = 0 - ((float) $value);
   }
