@@ -27,6 +27,12 @@ function setup_menu(){
           'price-changer',
           'setup_page'
       );
+      if(isset($_POST['submit']))
+      {
+        if(isset($_POST['products']) and isset($_POST['price-input'])){
+          change_prices($_POST['products'], $_POST['price-input']);
+        }
+      }
   }
 }
 
@@ -124,12 +130,6 @@ class ProductList extends WP_List_Table {
 function setup_page(){
   $myListTable = new ProductList();
   echo '<div class="wrap"><h1>WC Price Changer</h1>';
-  if(isset($_POST['submit']))
-  {
-    if(isset($_POST['products']) and isset($_POST['price-input'])){
-      change_prices($_POST['products'], $_POST['price-input']);
-    }
-  }
   $myListTable->prepare_items();
 ?>
   <form method="post">
