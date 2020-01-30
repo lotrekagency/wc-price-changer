@@ -30,7 +30,7 @@ function setup_menu(){
       if(isset($_POST['submit']))
       {
         if(isset($_POST['products']) and isset($_POST['price-input'])){
-          change_prices($_POST['products'], $_POST['price-input']);
+          change_prices($_POST['products'], $_POST['price-input'], $_POST['choice-unit']);
         }
       }
   }
@@ -217,6 +217,7 @@ protected function extra_tablenav( $which ) {
 
   function process_bulk_action() {
     $action = $this->current_action();
+    //setup_price_changer_unit();
     switch ( $action ) {
       case 'price-change-unit':
         setup_price_changer_unit();
@@ -257,26 +258,39 @@ function setup_price_changer_unit(){
 </style>
 <div class="wrap form-price-changer">
   <form method="post">
-    <label for="price-input">Insert price:</label>
-    <?php
-      $products = $_POST['products'];
-      foreach($products as $product){
-        echo '<input type="hidden" name="products[]" value=' . $product . '>';
-      }
-    ?>
+<?php
+  $products = $_POST['products'];
+  foreach($products as $product){
+    echo '<input type="hidden" name="products[]" value=' . $product . '>';
+  }
+?>
+    <label for="action-choice-unit">Tipo di modifica</label><br>
+
+    <br><input type="radio" name="choice-unit" value="inc" checked>Incremento</input>
+
+    <input type="radio" name="choice-unit" value="dec">Decremento</input><br>
+
+    <br><label for="price-input">Valore di modifica</label><br>
+
     <input type="text" name="price-input" id="price-input"></input>
+
     <?php submit_button('Apply');?>
   </form>
 </div>
 <?php
 }
 
-function change_prices($ids, $price){
+function change_prices($ids, $value, $choice){
+  if ($choice == 'dec'){
+    $value = 0 - ((float) $value);
+  }
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
-    $product_retrieved->set_price($price);
-    $product_retrieved->set_regular_price($price);
+    $product_retrieved_price = (float)$product_retrieved->get_price();
+    $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price + $value));
+    $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price + $value));
     $product_retrieved->save();
   }
 }
+
 ?>
