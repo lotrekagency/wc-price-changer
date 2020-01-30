@@ -41,7 +41,11 @@ class ProductList extends WP_List_Table {
   var $products = array();
 
   function __construct(){
-    $this->products = wc_get_products(array('status' => 'publish'));
+    $selected_categories = '';
+    if(isset($_POST['categories'])){
+      $selected_categories = $_POST['categories'];
+    }
+    $this->products = wc_get_products(array('status' => 'publish', 'category' => $selected_categories));
     parent::__construct( array(
         'singular'  => __( 'prodotto', '' ),
         'plural'    => __( 'prodotti', '' ),
@@ -71,9 +75,10 @@ class ProductList extends WP_List_Table {
   function get_columns(){
     $columns = array(
         'cb'        => '<input type="checkbox"/>',
-        'name' => __( 'Name', '' ),
-        'price' => __( 'Price', '' ),
-        'id' => __('ID', '')
+        'name' => __( 'Nome', '' ),
+        'category' => __('Categoria', ''),
+        'price' => __( 'Prezzo', '' ),
+        'id' => __('ID', ''),
     );
      return $columns;
   }
@@ -82,6 +87,8 @@ class ProductList extends WP_List_Table {
     switch( $column_name ) {
         case 'name':
           return $item->get_title();
+        case 'category':
+          return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
         case 'price':
           return $item->get_price();
         case 'id':
@@ -195,13 +202,13 @@ protected function extra_tablenav( $which ) {
         <div class="alignright actions bulkactions">
         <?php
         $categories = get_terms( ['taxonomy' => 'product_cat'] );
-        echo "<select>\n";
+        echo '<select name="categories">\n';
         echo '<option value="">Tutte le categorie</option>';
         foreach ( $categories as $category ) {
-            echo "\t" . '<option value="' . $category->term_id . '">' . $category->name . "</option>\n";
+            echo "\t" . '<option value="' . $category->slug . '">' . $category->name . "</option>\n";
         }
         echo "</select>\n";
-        submit_button( __( 'Filtra' ), 'action', '', false );
+        submit_button( 'Filtra', '', 'filter_action', false, array( 'id' => 'post-query-submit' ) );
         ?>
         </div>
         <?php
@@ -240,7 +247,7 @@ function setup_page(){
   echo '</div>';
 }
 
-function setup_price_changer(){
+function setup_price_changer_unit(){
 ?>
 <style>
 .form-price-changer{
