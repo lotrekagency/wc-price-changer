@@ -113,6 +113,80 @@ class ProductList extends WP_List_Table {
     return $actions;
   }
 
+  protected function bulk_actions( $which = '' ) {
+    if ( is_null( $this->_actions ) ) {
+        $this->_actions = $this->get_bulk_actions();
+        /**
+         * Filters the list table Bulk Actions drop-down.
+         *
+         * The dynamic portion of the hook name, `$this->screen->id`, refers
+         * to the ID of the current screen, usually a string.
+         *
+         * This filter can currently only be used to remove bulk actions.
+         *
+         * @since 3.5.0
+         *
+         * @param string[] $actions An array of the available bulk actions.
+         */
+        $this->_actions = apply_filters( "bulk_actions-{$this->screen->id}", $this->_actions );  // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+        $two            = '';
+    } else {
+        $two = '2';
+    }
+
+    if ( empty( $this->_actions ) ) {
+        return;
+    }
+
+    echo '<label for="bulk-action-selector-' . esc_attr( $which ) . '" class="screen-reader-text">' . __( 'Select bulk action' ) . '</label>';
+    echo '<select name="action' . $two . '" id="bulk-action-selector-' . esc_attr( $which ) . "\">\n";
+
+    foreach ( $this->_actions as $name => $title ) {
+        $class = 'edit' === $name ? ' class="hide-if-no-js"' : '';
+
+        echo "\t" . '<option value="' . $name . '"' . $class . '>' . $title . "</option>\n";
+    }
+
+    echo "</select>\n";
+
+    submit_button( __( 'Apply' ), 'actuib', '', false, array( 'id' => "doaction$two" ) );
+    echo "\n";
+  }
+
+  public function display() {
+    $singular = $this->_args['singular'];
+
+    $this->display_tablenav( 'top' );
+
+    $this->screen->render_screen_reader_content( 'heading_list' );
+    ?>
+<table class="wp-list-table <?php echo implode( ' ', $this->get_table_classes() ); ?>">
+<thead>
+<tr>
+    <?php $this->print_column_headers(); ?>
+</tr>
+</thead>
+
+<tbody id="the-list"
+    <?php
+    if ( $singular ) {
+        echo " data-wp-lists='list:$singular'";
+    }
+    ?>
+    >
+    <?php $this->display_rows_or_placeholder(); ?>
+</tbody>
+
+<tfoot>
+<tr>
+    <?php $this->print_column_headers( false ); ?>
+</tr>
+</tfoot>
+
+</table>
+    <?php
+}
+
   function process_bulk_action() {
     $action = $this->current_action();
     switch ( $action ) {
