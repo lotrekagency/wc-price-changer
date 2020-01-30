@@ -108,7 +108,8 @@ class ProductList extends WP_List_Table {
 
   function get_bulk_actions() {
     $actions = array(
-      'price-change'    => 'Change price of selected products'
+      'price-change-unit'    => 'Modifica i prezzi di un valore unitario',
+      'price-change-percentage'    => 'Modifica i prezzi di un valore percentuale'
     );
     return $actions;
   }
@@ -149,7 +150,7 @@ class ProductList extends WP_List_Table {
 
     echo "</select>\n";
 
-    submit_button( __( 'Apply' ), 'actuib', '', false, array( 'id' => "doaction$two" ) );
+    submit_button( __( 'Apply' ), 'action', '', false, array( 'id' => "doaction$two" ) );
     echo "\n";
   }
 
@@ -187,11 +188,34 @@ class ProductList extends WP_List_Table {
     <?php
 }
 
+protected function extra_tablenav( $which ) {
+    $move_on_url = '&cat-filter=';
+    if ( $which == "top" ){
+        ?>
+        <div class="alignright actions bulkactions">
+        <?php
+        $categories = get_terms( ['taxonomy' => 'product_cat'] );
+        echo "<select>\n";
+        echo '<option value="">Tutte le categorie</option>';
+        foreach ( $categories as $category ) {
+            echo "\t" . '<option value="' . $category->term_id . '">' . $category->name . "</option>\n";
+        }
+        echo "</select>\n";
+        submit_button( __( 'Filtra' ), 'action', '', false );
+        ?>
+        </div>
+        <?php
+    }
+}
+
   function process_bulk_action() {
     $action = $this->current_action();
     switch ( $action ) {
-      case 'price-change':
-        setup_price_changer();
+      case 'price-change-unit':
+        setup_price_changer_unit();
+        break;
+      case 'price-change-percentage':
+        //setup_price_changer_percentage();
         break;
       default:
         return;
