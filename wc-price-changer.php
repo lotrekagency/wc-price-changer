@@ -319,13 +319,15 @@ function setup_price_changer_percentage(){
   }
 
 function change_prices($ids, $value, $choice, $operation){
-  //operation type => $operation
   if ($choice == 'dec'){
     $value = 0 - ((float) $value);
   }
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
     $product_retrieved_price = (float)$product_retrieved->get_price();
+    if ( $operation == 'percentage' ){
+      $value = ( $product_retrieved_price / 100 ) * $value;
+    }
     $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price + $value));
     $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price + $value));
     $product_retrieved->save();
