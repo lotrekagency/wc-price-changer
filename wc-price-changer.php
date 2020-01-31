@@ -6,12 +6,13 @@
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
-
+//define('ALTERNATE_WP_CRON', true);
 init_plugin();
 
 function init_plugin(){
   add_action('admin_menu', 'setup_menu');
   add_action('apply_price_changes', 'apply');
+  add_action('action_change_prices', 'change_prices', 10, 4);
   if (!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
   }
@@ -30,7 +31,8 @@ function setup_menu(){
       if(isset($_POST['submit']))
       {
         if(isset($_POST['products']) and isset($_POST['value-input'])){
-          change_prices($_POST['products'], $_POST['value-input'], $_POST['choice-unit'], $_POST['submit-type']);
+          $action_args = array($_POST['products'], $_POST['value-input'], $_POST['choice-unit'], $_POST['submit-type']);
+          wp_schedule_single_event(time() + 20, 'action_change_prices', $action_args);
         }
       }
   }
@@ -263,6 +265,7 @@ function setup_price_changer_unit(){
   foreach($products as $product){
     echo '<input type="hidden" name="products[]" value=' . $product . '>';
   }
+
 ?>
     <label for="choice-unit">Tipo di modifica</label><br>
 
@@ -273,6 +276,7 @@ function setup_price_changer_unit(){
     <br><label for="price-input">Valore di modifica</label><br>
 
     <input type="text" name="value-input" id="price-input"></input>
+
 
     <?php
       echo '<input type="hidden" name="submit-type" value="unit">';
