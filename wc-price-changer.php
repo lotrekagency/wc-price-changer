@@ -13,6 +13,7 @@ function init_plugin(){
   add_action('admin_menu', 'setup_menu');
   add_action('apply_price_changes', 'apply');
   add_action('action_change_prices', 'change_prices', 10, 4);
+  add_action('action_remove_prices', 'remove_prices', 10, 1);
   if (!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
   }
@@ -31,8 +32,9 @@ function setup_menu(){
       if(isset($_POST['submit']))
       {
         if(isset($_POST['products']) and isset($_POST['value-input'])){
-          $action_args = array($_POST['products'], $_POST['value-input'], $_POST['choice-unit'], $_POST['submit-type']);
-          wp_schedule_single_event(time() + 20, 'action_change_prices', $action_args);
+          $action_args_start = array($_POST['products'], $_POST['value-input'], $_POST['choice-unit'], $_POST['submit-type']);
+          wp_schedule_single_event(strtotime($_POST['datetime-input-start']) - 3600, 'action_change_prices', $action_args_start);
+          wp_schedule_single_event(strtotime($_POST['datetime-input-end']) - 3600, 'action_remove_prices', array($_POST['products']));
         }
       }
   }
@@ -80,6 +82,7 @@ class ProductList extends WP_List_Table {
         'name' => __( 'Nome', '' ),
         'category' => __('Categoria', ''),
         'price' => __( 'Prezzo', '' ),
+        'sale_price' => __('Prezzo scontato', ''),
         'id' => __('ID', ''),
     );
      return $columns;
@@ -93,6 +96,8 @@ class ProductList extends WP_List_Table {
           return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
         case 'price':
           return $item->get_price();
+        case 'sale_price':
+          return $item->get_sale_price() ? $item->get_sale_price() : '-';
         case 'id':
           return $item->get_id();
         default:
@@ -277,6 +282,10 @@ function setup_price_changer_unit(){
 
     <input type="text" name="value-input" id="price-input"></input>
 
+    <input type="datetime-local" name="datetime-input-start" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+
+    <input type="datetime-local" name="datetime-input-end" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+
 
     <?php
       echo '<input type="hidden" name="submit-type" value="unit">';
@@ -313,6 +322,10 @@ function setup_price_changer_percentage(){
 
       <input type="number" name="value-input" name="price-input" min="1" max="100">
 
+      <input type="datetime-local" name="datetime-input-start" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+
+      <input type="datetime-local" name="datetime-input-end" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+
       <?php
       echo '<input type="hidden" name="submit-type" value="percentage">';
       submit_button('Apply');
@@ -328,12 +341,19 @@ function change_prices($ids, $value, $choice, $operation){
   }
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
-    $product_retrieved_price = (float)$product_retrieved->get_price();
+    $product_retrieved_price = (float)$product_retrieved->get_regular_price();
     if ( $operation == 'percentage' ){
       $value = ( $product_retrieved_price / 100 ) * $value;
     }
-    $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price + $value));
-    $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price + $value));
+    $product_retrieved->set_sale_price(sprintf("%.2f",  $product_retrieved_price + $value));
+    $product_retrieved->save();
+  }
+}
+
+function remove_prices($ids){
+  foreach ( $ids as $product ){
+    $product_retrieved = wc_get_product($product);
+    $product_retrieved->set_sale_price('');
     $product_retrieved->save();
   }
 }
