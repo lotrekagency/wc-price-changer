@@ -336,12 +336,15 @@ function remove_prices($ids, $choice, $value, $operation){
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
     $product_retrieved_price = (float)$product_retrieved->get_regular_price();
-    if ( $operation == 'percentage' ){
-      $value = ( $product_retrieved_price / 100 ) * $value;
-    }
     if ( $choice == 'inc' ){
-      $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price - $value));
-      $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price - $value));
+      if ( $operation == 'percentage' ){
+        $product_retrieved->set_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
+        $product_retrieved->set_regular_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
+      }
+      else {
+        $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price - $value));
+        $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price - $value));
+      }
     } else {
       $product_retrieved->set_sale_price('');
     }
