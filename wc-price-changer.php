@@ -6,7 +6,7 @@
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
-//define('ALTERNATE_WP_CRON', true);
+define('ALTERNATE_WP_CRON', true);
 init_plugin();
 
 function init_plugin(){
