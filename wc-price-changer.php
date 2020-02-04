@@ -38,9 +38,11 @@ function setup_menu(){
             if($_POST['datetime-end']){
               wp_schedule_single_event(strtotime($_POST['datetime-end']) - 3600, 'action_remove_prices', $action_args);
             }
+            add_action( 'admin_notices', 'action_notice_schedule_change' );
           }
           else{
             do_action('action_change_prices', $_POST['products'], $_POST['choice'], (float)$_POST['value'], $_POST['submit-type']);
+            add_action( 'admin_notices', 'action_notice_direct_change' );
           }
         }
       }
@@ -231,7 +233,7 @@ protected function extra_tablenav( $which ) {
 
   function process_bulk_action() {
     $action = $this->current_action();
-    //setup_price_changer_unit();
+    setup_price_changer('unit');
     switch ( $action ) {
       case 'price-change-unit':
         setup_price_changer('unit');
@@ -272,6 +274,7 @@ function setup_price_changer($type){
 </style>
 <div class="wrap form-price-changer">
   <form method="post">
+  <table>
 <?php
   $products = $_POST['products'];
   foreach($products as $product){
@@ -279,38 +282,66 @@ function setup_price_changer($type){
   }
 
 ?>
+    <tr>
+    <td>
+      <table>
+    <tr>
+    <td>
     <label for="choice">Tipo di modifica</label><br>
+    <input type="radio" name="choice" value="dec" checked>Decremento</input>
+    </td>
+    <td>
+    <br><input type="radio" name="choice" value="inc">Incremento</input>
+    </td>
+    </tr>
 
-    <br><input type="radio" name="choice" value="dec" checked>Decremento</input>
-
-    <input type="radio" name="choice" value="inc">Incremento</input><br>
+    <tr>
 
     <?php
     if($type == 'unit'){
     ?>
-      <br><label for="value">Valore di modifica</label><br>
-
+      <td>
+      <label for="value">Valore di modifica (€)</label><br>
       <input type="number" name="value" name="value" step="0.01" min="0.01">
+      </td>
     <?php
     } else if($type == 'percentage'){
     ?>
-      <br><label for="price">Valore di modifica</label><br>
-
+      <td>
+      <label for="price">Valore percentuale di modifica (%)</label><br>
       <input type="number" name="value" name="price" min="1" max="100">
+      </td>
     <?php
     }
   ?>
-    <input type="datetime-local" name="datetime-start" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
-
-    <input type="datetime-local" name="datetime-end" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
-
+    </tr>
+    <tr>
+      <td>
+      <label for="datetime-start">Data e ora di inizio</label><br>
+      <input type="datetime-local" name="datetime-start" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+      </td>
+      <td>
+      <label for="datetime-end">Data e ora di fine</label><br>
+      <input type="datetime-local" name="datetime-end" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+      </td>
+    </tr>
 
     <?php
+      echo '<tr><td>';
       echo '<input type="hidden" name="submit-type" value=' . $type . '>';
       submit_button('Apply');
+      echo '</td></tr>';
     ?>
+    </table>
+    </td>
+    <td>
+    <!-- ListBox here-->
+    </td>
+    </tr>
+    </table>
   </form>
 </div>
+<hr>
 <?php
 }
 
@@ -350,6 +381,22 @@ function remove_prices($ids, $choice, $value, $operation){
     }
     $product_retrieved->save();
   }
+}
+
+function action_notice_direct_change() {
+  ?>
+  <div class="notice notice-success is-dismissible">
+      <p><?php _e( 'I prezzi dei prodotti selezionati sono stati modificati con successo.', '' ); ?></p>
+  </div>
+  <?php
+}
+
+function action_notice_schedule_change() {
+  ?>
+  <div class="notice notice-success is-dismissible">
+      <p><?php _e( 'La modifica dei prezzi dei prodotti selezionati è stata messa in coda.', '' ); ?></p>
+  </div>
+  <?php
 }
 
 ?>
