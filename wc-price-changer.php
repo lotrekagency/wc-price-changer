@@ -233,7 +233,7 @@ protected function extra_tablenav( $which ) {
 
   function process_bulk_action() {
     $action = $this->current_action();
-    setup_price_changer('unit');
+    //setup_price_changer('unit');
     switch ( $action ) {
       case 'price-change-unit':
         setup_price_changer('unit');
@@ -253,6 +253,9 @@ function setup_page(){
   $myListTable = new ProductList();
   echo '<div class="wrap"><h1>WC Price Changer</h1>';
   $myListTable->prepare_items();
+  if(isset($_POST['preview'])){
+    setup_price_changer('unit');
+  }
 ?>
   <form method="post">
     <input type="hidden" name="page" value="ttest_list_table">
@@ -270,11 +273,19 @@ function setup_price_changer($type){
 .form-price-changer{
   display: inline-block;
   vertical-align: top;
+  width: 100%;
+}
+.table-form {
+  width: 100%;
+}
+.table-selected {
+  width: 100%;
+  height: 100%;
 }
 </style>
 <div class="wrap form-price-changer">
   <form method="post">
-  <table>
+  <table class="table-form">
 <?php
   $products = $_POST['products'];
   foreach($products as $product){
@@ -288,10 +299,10 @@ function setup_price_changer($type){
     <tr>
     <td>
     <label for="choice">Tipo di modifica</label><br>
-    <input type="radio" name="choice" value="dec" checked>Decremento</input>
+    <input type="radio" name="choice" value="dec" <? if($_POST['choice'] == 'dec' or !isset($_POST['choice'])){ echo 'checked'; } ?>>Decremento</input>
     </td>
     <td>
-    <br><input type="radio" name="choice" value="inc">Incremento</input>
+    <br><input type="radio" name="choice" value="inc" <? if($_POST['choice'] == 'inc'){ echo 'checked'; } ?>>Incremento</input>
     </td>
     </tr>
 
@@ -302,7 +313,7 @@ function setup_price_changer($type){
     ?>
       <td>
       <label for="value">Valore di modifica (€)</label><br>
-      <input type="number" name="value" name="value" step="0.01" min="0.01">
+      <input type="number" value="<?php echo $_POST['value'];?>" name="value" name="value" step="0.01" min="0.01">
       </td>
     <?php
     } else if($type == 'percentage'){
@@ -327,15 +338,46 @@ function setup_price_changer($type){
     </tr>
 
     <?php
-      echo '<tr><td>';
+      echo '<tr><td><br></td></tr>';
+      echo '<tr>';
       echo '<input type="hidden" name="submit-type" value=' . $type . '>';
-      submit_button('Apply');
-      echo '</td></tr>';
+      echo '<td>';
+      submit_button('Anteprima', 'secondary', 'preview', false );
+      echo '</td>';
+      echo '<td>';
+      submit_button('Apply', 'primary', 'submit', false );
+      echo '</td>';
+      echo '</tr>';
     ?>
     </table>
     </td>
     <td>
-    <!-- ListBox here-->
+      <p>Prodotti selezionati</p>
+      <table class="table-selected">
+        <thead style="text-align: left">
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Prezzo</th>
+            <th>Prezzo modificato</th>
+          </tr>
+        </thead>
+        <tbody style="overflow-y: scroll">
+        <?php
+          $products = $_POST['products'];
+          foreach ($products as $product){
+            $product_retrieved = wc_get_product($product);
+            echo '<tr><td>' . $product . '</td>';
+            echo '<td>' . $product_retrieved->get_name() . '</td>';
+            echo '<td>' . $product_retrieved->get_regular_price() . '</td>';
+            if(isset($_POST['preview'])){
+              echo '<td>' . calculate_final_price($product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], $_POST['submit-type']) . '</td>';
+            }
+            echo '</tr>';
+          }
+        ?>
+        </tbody>
+      </table>
     </td>
     </tr>
     </table>
@@ -367,6 +409,7 @@ function remove_prices($ids, $choice, $value, $operation){
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
     $product_retrieved_price = (float)$product_retrieved->get_regular_price();
+
     if ( $choice == 'inc' ){
       if ( $operation == 'percentage' ){
         $product_retrieved->set_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
@@ -380,6 +423,17 @@ function remove_prices($ids, $choice, $value, $operation){
       $product_retrieved->set_sale_price('');
     }
     $product_retrieved->save();
+  }
+}
+
+function calculate_final_price($price, $choice, $value, $operation){
+  if ( $operation == 'percentage' ){
+    $value = ( $price / 100 ) * $value;
+  }
+  if ( $choice == 'inc' ){
+    return sprintf("%.2f",  $price + $value);
+  } else {
+    return sprintf("%.2f",  $price - $value);
   }
 }
 
