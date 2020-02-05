@@ -254,7 +254,7 @@ function setup_page(){
   echo '<div class="wrap"><h1>WC Price Changer</h1>';
   $myListTable->prepare_items();
   if(isset($_POST['preview'])){
-    setup_price_changer('unit');
+    setup_price_changer($_POST['submit-type']);
   }
 ?>
   <form method="post">
