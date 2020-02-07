@@ -251,6 +251,66 @@ class ProductList extends WP_List_Table {
       }
   }
 
+  protected function single_row_columns( $item ) {
+    list( $columns, $hidden, $sortable, $primary ) = $this->get_column_info();
+
+    foreach ( $columns as $column_name => $column_display_name ) {
+        $classes = "$column_name column-$column_name";
+        if ( $primary === $column_name ) {
+            $classes .= ' has-row-actions column-primary';
+        }
+
+        if ( in_array( $column_name, $hidden ) ) {
+            $classes .= ' hidden';
+        }
+
+        // Comments column uses HTML in the display name with screen reader text.
+        // Instead of using esc_attr(), we strip tags to get closer to a user-friendly string.
+        $data = 'data-colname="' . wp_strip_all_tags( $column_display_name ) . '"';
+
+        $attributes = "class='$classes' $data";
+
+        if ( 'cb' === $column_name ) {
+          ?>
+          <style>
+          .variation_cb{
+            width: 100px;
+          }
+          </style>
+          <?php
+            $variation_class = "";
+            if ($item->is_type('variation')){
+              $variation_class = 'variation_cb';
+            }
+            echo sprintf('<th scope="row" class="check-column %s">', $variation_class);
+            echo $this->column_cb( $item );
+            echo '</th>';
+        } elseif ( method_exists( $this, '_column_' . $column_name ) ) {
+            echo call_user_func(
+                array( $this, '_column_' . $column_name ),
+                $item,
+                $classes,
+                $data,
+                $primary
+            );
+        } elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+            echo "<td $attributes>";
+            echo call_user_func( array( $this, 'column_' . $column_name ), $item );
+            echo $this->handle_row_actions( $item, $column_name, $primary );
+            echo '</td>';
+        } else {
+            echo "<td $attributes>";
+            $style_variation = "";
+            if ($item->is_type('variation')){
+              $style_variation = "text-indent: 30px";
+            }
+            echo sprintf('<p style="%s">%s</p>', $style_variation, $this->column_default( $item, $column_name ));
+            echo $this->handle_row_actions( $item, $column_name, $primary );
+            echo '</td>';
+        }
+    }
+}
+
   function process_bulk_action() {
     $action = $this->current_action();
     //setup_price_changer('unit');
