@@ -115,7 +115,7 @@ class ProductList extends WP_List_Table {
   function column_default( $item, $column_name ) {
     switch( $column_name ) {
         case 'name':
-          return $item->get_name();
+          return ((isset($_POST['viewing']) and ($_POST['viewing'] == 'variations') and (!$item->is_type('variation'))) ? ('<strong>' . $item->get_name() . '</strong>') : $item->get_name());
         case 'category':
           return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
         case 'price':
