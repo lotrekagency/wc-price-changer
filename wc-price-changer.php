@@ -233,15 +233,15 @@ class ProductList extends WP_List_Table {
           <div class="alignright actions bulkactions">
           <?php
           echo '<select name="viewing">\n';
-          echo '<option value="products">Solo prodotti</option>';
-          echo "\t" . '<option value="variations">Prodotti e variazioni</option>\n';
+          echo '<option value="products" ' . ((isset($_POST['viewing']) and $_POST['viewing'] == 'products') ? 'selected' : '') .'>Solo prodotti</option>';
+          echo "\t" . '<option value="variations" ' . ((isset($_POST['viewing']) and $_POST['viewing'] == 'variations') ? 'selected' : '') . '>Prodotti e variazioni</option>\n';
           echo "</select>\n";
 
           $categories = get_terms( ['taxonomy' => 'product_cat'] );
           echo '<select name="categories">\n';
           echo '<option value="">Tutte le categorie</option>';
           foreach ( $categories as $category ) {
-              echo "\t" . '<option value="' . $category->slug . '">' . $category->name . "</option>\n";
+              echo "\t" . '<option value="' . $category->slug . '"' . ((isset($_POST['categories']) and $_POST['categories'] == $category->slug) ? 'selected' : '') . '>' . $category->name . "</option>\n";
           }
           echo "</select>\n";
           submit_button( 'Filtra', '', 'filter_action', false, array( 'id' => 'post-query-submit' ) );
