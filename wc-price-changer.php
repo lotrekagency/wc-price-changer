@@ -271,18 +271,7 @@ class ProductList extends WP_List_Table {
         $attributes = "class='$classes' $data";
 
         if ( 'cb' === $column_name ) {
-          ?>
-          <style>
-          .variation_cb{
-            width: 100px;
-          }
-          </style>
-          <?php
-            $variation_class = "";
-            if ($item->is_type('variation')){
-              $variation_class = 'variation_cb';
-            }
-            echo sprintf('<th scope="row" class="check-column %s">', $variation_class);
+            echo '<th scope="row" class="check-column">';
             echo $this->column_cb( $item );
             echo '</th>';
         } elseif ( method_exists( $this, '_column_' . $column_name ) ) {
