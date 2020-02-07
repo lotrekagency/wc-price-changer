@@ -59,6 +59,21 @@ class ProductList extends WP_List_Table {
       $selected_categories = $_POST['categories'];
     }
     $this->products = wc_get_products(array('status' => 'publish', 'category' => $selected_categories));
+    if(isset($_POST['viewing'])){
+      if($_POST['viewing'] == 'variations'){
+        $variations = array();
+        foreach($this->products as $product){
+          array_push($variations, $product);
+          if ($product instanceof WC_Product_Variable){
+            foreach($product->get_available_variations() as $product_variation){
+              array_push($variations, wc_get_product($product_variation['variation_id']));
+            }
+          }
+        }
+        $this->products = $variations;
+      }
+    }
+
     parent::__construct( array(
         'singular'  => __( 'prodotto', '' ),
         'plural'    => __( 'prodotti', '' ),
@@ -100,7 +115,7 @@ class ProductList extends WP_List_Table {
   function column_default( $item, $column_name ) {
     switch( $column_name ) {
         case 'name':
-          return $item->get_title();
+          return $item->get_name();
         case 'category':
           return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
         case 'price':
@@ -211,25 +226,30 @@ class ProductList extends WP_List_Table {
     <?php
 }
 
-protected function extra_tablenav( $which ) {
-    $move_on_url = '&cat-filter=';
-    if ( $which == "top" ){
-        ?>
-        <div class="alignright actions bulkactions">
-        <?php
-        $categories = get_terms( ['taxonomy' => 'product_cat'] );
-        echo '<select name="categories">\n';
-        echo '<option value="">Tutte le categorie</option>';
-        foreach ( $categories as $category ) {
-            echo "\t" . '<option value="' . $category->slug . '">' . $category->name . "</option>\n";
-        }
-        echo "</select>\n";
-        submit_button( 'Filtra', '', 'filter_action', false, array( 'id' => 'post-query-submit' ) );
-        ?>
-        </div>
-        <?php
-    }
-}
+  protected function extra_tablenav( $which ) {
+      $move_on_url = '&cat-filter=';
+      if ( $which == "top" ){
+          ?>
+          <div class="alignright actions bulkactions">
+          <?php
+          echo '<select name="viewing">\n';
+          echo '<option value="products">Solo prodotti</option>';
+          echo "\t" . '<option value="variations">Prodotti e variazioni</option>\n';
+          echo "</select>\n";
+
+          $categories = get_terms( ['taxonomy' => 'product_cat'] );
+          echo '<select name="categories">\n';
+          echo '<option value="">Tutte le categorie</option>';
+          foreach ( $categories as $category ) {
+              echo "\t" . '<option value="' . $category->slug . '">' . $category->name . "</option>\n";
+          }
+          echo "</select>\n";
+          submit_button( 'Filtra', '', 'filter_action', false, array( 'id' => 'post-query-submit' ) );
+          ?>
+          </div>
+          <?php
+      }
+  }
 
   function process_bulk_action() {
     $action = $this->current_action();
