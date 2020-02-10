@@ -46,6 +46,11 @@ function setup_menu(){
           }
         }
       }
+      if ( isset( $_POST['action'] ) ){
+        if ( !isset( $_POST['products'] ) ){
+          add_action( 'admin_notices', 'action_notice_no_products' );
+        }
+      }
   }
 }
 
@@ -301,17 +306,18 @@ class ProductList extends WP_List_Table {
 
   function process_bulk_action() {
     $action = $this->current_action();
-    //setup_price_changer('unit');
-    switch ( $action ) {
-      case 'price-change-unit':
-        setup_price_changer('unit');
-        break;
-      case 'price-change-percentage':
-        setup_price_changer('percentage');
-        break;
-      default:
-        return;
-        break;
+    if ( isset( $_POST['products'] ) ) {
+      switch ( $action ) {
+        case 'price-change-unit':
+          setup_price_changer('unit');
+          break;
+        case 'price-change-percentage':
+          setup_price_changer('percentage');
+          break;
+        default:
+          return;
+          break;
+      }
     }
     return;
   }
@@ -381,14 +387,14 @@ function setup_price_changer($type){
     ?>
       <td>
       <label for="value">Valore di modifica (€)</label><br>
-      <input type="number" value="<?php echo $_POST['value'];?>" name="value" name="value" step="0.01" min="0.01">
+      <input type="number" value="<?php echo $_POST['value'];?>" name="value" required="required" step="0.01" min="0.01">
       </td>
     <?php
     } else if($type == 'percentage'){
     ?>
       <td>
       <label for="price">Valore percentuale di modifica (%)</label><br>
-      <input type="number" name="value" name="price" min="1" max="100">
+      <input type="number" value="<?php echo $_POST['value'];?>" name="value" required="required" min="1" max="100">
       </td>
     <?php
     }
@@ -397,11 +403,11 @@ function setup_price_changer($type){
     <tr>
       <td>
       <label for="datetime-start">Data e ora di inizio</label><br>
-      <input type="datetime-local" name="datetime-start" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+      <input type="datetime-local" value="<?php echo $_POST['datetime-start'];?>" name="datetime-start" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
       </td>
       <td>
       <label for="datetime-end">Data e ora di fine</label><br>
-      <input type="datetime-local" name="datetime-end" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
+      <input type="datetime-local" value="<?php echo $_POST['datetime-end'];?>" name="datetime-end" min="<?php echo date('Y-m-d\TH:i'); ?>"></input>
       </td>
     </tr>
 
@@ -439,7 +445,7 @@ function setup_price_changer($type){
             echo '<td>' . $product_retrieved->get_name() . '</td>';
             echo '<td>' . $product_retrieved->get_regular_price() . '</td>';
             if(isset($_POST['preview'])){
-              echo '<td>' . calculate_final_price($product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], $_POST['submit-type']) . '</td>';
+              echo '<td>' . calculate_final_price((float)$product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], $_POST['submit-type']) . '</td>';
             }
             echo '</tr>';
           }
@@ -455,22 +461,21 @@ function setup_price_changer($type){
 <?php
 }
 
-
 function change_prices($ids, $choice, $value, $operation){
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
-    $product_retrieved_price = (float)$product_retrieved->get_regular_price();
-    if ( $operation == 'percentage' ){
-      $value = ( $product_retrieved_price / 100 ) * $value;
-    }
-    if ( $choice == 'inc' ){
-      $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price + $value));
-      $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price + $value));
-    } else {
-      $product_retrieved->set_sale_price(sprintf("%.2f",  $product_retrieved_price - $value));
-    }
-    $product_retrieved->save();
+    set_prices($product_retrieved, calculate_final_price((float)$product_retrieved->get_regular_price(), $choice, $value, $operation), $choice);
   }
+}
+
+function set_prices($product, $new_price, $choice){
+  if ( $choice == 'inc' ){
+    $product->set_price($new_price);
+    $product->set_regular_price($new_price);
+  } else {
+    $product->set_sale_price($new_price);
+  }
+  $product->save();
 }
 
 function remove_prices($ids, $choice, $value, $operation){
@@ -503,6 +508,14 @@ function calculate_final_price($price, $choice, $value, $operation){
   } else {
     return sprintf("%.2f",  $price - $value);
   }
+}
+
+function action_notice_no_products() {
+  ?>
+  <div class="notice notice-warning is-dismissible">
+      <p><?php _e( 'Nessun prodotto selezionato.', '' ); ?></p>
+  </div>
+  <?php
 }
 
 function action_notice_direct_change() {
