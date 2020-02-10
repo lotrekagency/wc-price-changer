@@ -263,7 +263,6 @@ class ProductList extends WP_List_Table {
         if ( in_array( $column_name, $hidden ) ) {
             $classes .= ' hidden';
         }
-
         // Comments column uses HTML in the display name with screen reader text.
         // Instead of using esc_attr(), we strip tags to get closer to a user-friendly string.
         $data = 'data-colname="' . wp_strip_all_tags( $column_display_name ) . '"';
@@ -288,14 +287,14 @@ class ProductList extends WP_List_Table {
             echo $this->handle_row_actions( $item, $column_name, $primary );
             echo '</td>';
         } else {
-            echo "<td $attributes>";
-            $style_variation = "";
-            if ($item->is_type('variation')){
-              $style_variation = "text-indent: 30px";
-            }
-            echo sprintf('<p style="%s">%s</p>', $style_variation, $this->column_default( $item, $column_name ));
-            echo $this->handle_row_actions( $item, $column_name, $primary );
-            echo '</td>';
+          $style_variation = "";
+          if ($item->is_type('variation') and $column_name == "name"){
+            $style_variation = 'style="padding-left: 30px"';
+          }
+          echo "<td $style_variation $attributes>";
+          echo $this->column_default( $item, $column_name );
+          echo $this->handle_row_actions( $item, $column_name, $primary );
+          echo '</td>';
         }
     }
 }
