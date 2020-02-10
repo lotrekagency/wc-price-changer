@@ -46,7 +46,7 @@ function setup_menu(){
           }
         }
       }
-      if ( isset( $_POST['action'] ) ){
+      if ( isset( $_POST['bulk-action'] ) ){
         if ( !isset( $_POST['products'] ) ){
           add_action( 'admin_notices', 'action_notice_no_products' );
         }
@@ -193,7 +193,7 @@ class ProductList extends WP_List_Table {
 
     echo "</select>\n";
 
-    submit_button( __( 'Apply' ), 'action', '', false, array( 'id' => "doaction$two" ) );
+    submit_button( __( 'Apply' ), 'action', 'bulk-action', false, array( 'id' => "doaction$two" ) );
     echo "\n";
   }
 
@@ -412,6 +412,13 @@ function setup_price_changer($type){
     </tr>
 
     <?php
+      if($_POST['viewing'] == 'variations'){
+        echo '<tr><td><br></td></tr>';
+        echo '<tr><td>';
+        echo '<input type="checkbox" name="exclude-variations">';
+        echo '<label for="exclude-variations">Applica cambio di prezzo solo alle variazioni.</label>';
+        echo '</td></tr>';
+      }
       echo '<tr><td><br></td></tr>';
       echo '<tr>';
       echo '<input type="hidden" name="submit-type" value=' . $type . '>';
