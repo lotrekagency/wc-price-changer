@@ -1,18 +1,10 @@
 # WooCommerce Price Changer
-Simple script to bulk change prices of specific categories in WooCommerce
+WooCommerce Plugin to bulk manage prices in WooCommerce
 
-### How to use
-#### Setup
-Create your `conf.php` file typing
+## Installation
 
-    cp conf-example.php conf.php
+TODO
 
-In `conf.php` you can set some values
+## Usage
 
-- `$TERM_ID_LIST`  represent id of categories
-- `$PERCENT_INCREASE` Boolean, defines type of increment, by percentage or by fixed value
-- `$INCREMENT_VALUE`
-
----
-
-**Star this repo if you have also saved hours of work ⭐️💕**
+TODO
