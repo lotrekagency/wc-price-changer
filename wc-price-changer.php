@@ -35,7 +35,20 @@ function setup_menu(){
     );
     if(isset($_POST['submit']))
     {
-      $action_args = array($_SESSION['products'], $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
+      $products = $_SESSION['products'];
+      if ( isset($_POST['only-variations']) ){
+        $variations = array();
+        foreach($products as $product){
+          array_push($variations, $product);
+          if ($product instanceof WC_Product_Variable){
+            foreach($product->get_available_variations() as $product_variation){
+              array_push($variations, wc_get_product($product_variation['variation_id']));
+            }
+          }
+        }
+        $products = $variations;
+      }
+      $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
       if($_POST['datetime-start']){
         wp_schedule_single_event(strtotime($_POST['datetime-start']) - 3600, 'action_change_prices', $action_args);
         if($_POST['datetime-end']){
@@ -44,7 +57,7 @@ function setup_menu(){
         add_action( 'admin_notices', 'action_notice_schedule_change' );
       }
       else{
-        do_action('action_change_prices', $_SESSION['products'], $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type']);
+        do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type']);
         add_action( 'admin_notices', 'action_notice_direct_change' );
       }
     }
