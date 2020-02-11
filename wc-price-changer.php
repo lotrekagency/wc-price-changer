@@ -22,6 +22,9 @@ function init_plugin(){
 
 function setup_menu(){
   if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))){
+    if (isset($_POST['viewing'])){
+      $_SESSION['viewing'] = $_POST['viewing'];
+    }
     add_submenu_page(
       'woocommerce',
       'Price Changer',
@@ -63,19 +66,17 @@ class ProductList extends WP_List_Table {
       $selected_categories = $_POST['categories'];
     }
     $this->products = wc_get_products(array('status' => 'publish', 'category' => $selected_categories));
-    if(isset($_POST['viewing'])){
-      if($_POST['viewing'] == 'variations'){
-        $variations = array();
-        foreach($this->products as $product){
-          array_push($variations, $product);
-          if ($product instanceof WC_Product_Variable){
-            foreach($product->get_available_variations() as $product_variation){
-              array_push($variations, wc_get_product($product_variation['variation_id']));
-            }
+    if($_SESSION['viewing'] == 'variations'){
+      $variations = array();
+      foreach($this->products as $product){
+        array_push($variations, $product);
+        if ($product instanceof WC_Product_Variable){
+          foreach($product->get_available_variations() as $product_variation){
+            array_push($variations, wc_get_product($product_variation['variation_id']));
           }
         }
-        $this->products = $variations;
       }
+      $this->products = $variations;
     }
 
     parent::__construct( array(
@@ -237,10 +238,9 @@ class ProductList extends WP_List_Table {
       <div class="alignright actions bulkactions">
       <?php
       echo '<select name="viewing">\n';
-      echo '<option value="products" ' . ((isset($_POST['viewing']) and $_POST['viewing'] == 'products') ? 'selected' : '') .'>Solo prodotti</option>';
-      echo "\t" . '<option value="variations" ' . ((isset($_POST['viewing']) and $_POST['viewing'] == 'variations') ? 'selected' : '') . '>Prodotti e variazioni</option>\n';
+      echo '<option value="products" ' . (($_SESSION['viewing'] == 'products') ? 'selected' : '') .'>Solo prodotti</option>';
+      echo "\t" . '<option value="variations" ' . (($_SESSION['viewing'] == 'variations') ? 'selected' : '') . '>Prodotti e variazioni</option>\n';
       echo "</select>\n";
-
       $categories = get_terms( ['taxonomy' => 'product_cat'] );
       echo '<select name="categories">\n';
       echo '<option value="">Tutte le categorie</option>';
@@ -402,7 +402,7 @@ function setup_price_changer($type){
       </tr>
 
       <?php
-        if((isset( $_POST['viewing'] ) and $_POST['viewing'] == 'variations') or (isset( $_POST['only-variations']))){
+        if($_SESSION['viewing'] == 'variations'){
           echo '<tr><td><br></td></tr>';
           echo '<tr><td>';
           echo '<input type="checkbox" name="only-variations" checked>';
