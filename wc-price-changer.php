@@ -50,9 +50,11 @@ function setup_menu(){
       }
       $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
       if($_POST['datetime-start']){
-        wp_schedule_single_event(strtotime($_POST['datetime-start']) - 3600, 'action_change_prices', $action_args);
+        $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone(get_option('timezone_string')));
+        wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
         if($_POST['datetime-end']){
-          wp_schedule_single_event(strtotime($_POST['datetime-end']) - 3600, 'action_remove_prices', $action_args);
+          $datetime_end = new DateTime($_POST['datetime-end'], new DateTimeZone(get_option('timezone_string')));
+          wp_schedule_single_event($datetime_end->format('U'), 'action_remove_prices', $action_args);
         }
         add_action( 'admin_notices', 'action_notice_schedule_change' );
       }
