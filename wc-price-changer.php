@@ -497,24 +497,36 @@ function setup_price_changer($type){
           <tbody style="overflow-y: scroll">
           <?php
             $products = $_SESSION['products'];
-            foreach ($products as $product){
-              $product_retrieved = wc_get_product($product);
-              if ( isset( $_POST['only-variations']) ){
+            $table_products = array();
+            if ( isset($_POST['only-variations']) ) {
+              foreach ( $products as $product) {
+                $product_retrieved = wc_get_product($product);
                 if ( !$product_retrieved->is_type('variation') ) {
                   continue;
+                } else {
+                  array_push($table_array, $product);
                 }
               }
-              echo '<tr><td>' . $product . '</td>';
-              echo '<td>' . $product_retrieved->get_name() . '</td>';
-              echo '<td>' . $product_retrieved->get_regular_price() . '</td>';
-              if(isset($_POST['preview'])){
-                echo '<td>' . calculate_final_price((float)$product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], $_SESSION['submit-type']) . '</td>';
+            } else {
+              $table_products = $products;
+            }
+            if ( $table_products ) {
+              foreach ($table_products as $product){
+                $product_retrieved = wc_get_product($product);
+                echo '<tr><td>' . $product . '</td>';
+                echo '<td>' . $product_retrieved->get_name() . '</td>';
+                echo '<td>' . $product_retrieved->get_regular_price() . '</td>';
+                if(isset($_POST['preview'])){
+                  echo '<td>' . calculate_final_price((float)$product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], $_SESSION['submit-type']) . '</td>';
+                }
+                echo '</tr>';
               }
-              echo '</tr>';
+              echo '</tbody></table>';
+            } else {
+              echo '</tbody></table>';
+              echo '<p>Nessun prodotto selezionato</p>';
             }
           ?>
-          </tbody>
-        </table>
       </td>
       </tr>
       </table>
