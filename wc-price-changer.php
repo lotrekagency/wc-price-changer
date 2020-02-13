@@ -46,19 +46,23 @@ function setup_menu(){
         }
         $products = $variations;
       }
-      $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
-      if($_POST['datetime-start']){
-        $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone(get_option('timezone_string')));
-        wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
-        if($_POST['datetime-end']){
-          $datetime_end = new DateTime($_POST['datetime-end'], new DateTimeZone(get_option('timezone_string')));
-          wp_schedule_single_event($datetime_end->format('U'), 'action_remove_prices', $action_args);
+      if ( $products ) {
+        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
+        if($_POST['datetime-start']){
+          $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone(get_option('timezone_string')));
+          wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
+          if($_POST['datetime-end']){
+            $datetime_end = new DateTime($_POST['datetime-end'], new DateTimeZone(get_option('timezone_string')));
+            wp_schedule_single_event($datetime_end->format('U'), 'action_remove_prices', $action_args);
+          }
+          add_action( 'admin_notices', 'action_notice_schedule_change' );
         }
-        add_action( 'admin_notices', 'action_notice_schedule_change' );
-      }
-      else{
-        do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type']);
-        add_action( 'admin_notices', 'action_notice_direct_change' );
+        else{
+          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type']);
+          add_action( 'admin_notices', 'action_notice_direct_change' );
+        }
+      } else {
+        add_action( 'admin_notices', 'action_notice_products_error' );
       }
     }
     if ( isset( $_POST['bulk-action'] ) ){
@@ -605,6 +609,14 @@ function notice_active_jobs() {
   ?>
   <div class="notice notice-warning">
       <p><?php _e( 'Ci sono cambi di prezzo attivi.', '' ); ?></p>
+  </div>
+  <?php
+}
+
+function action_notice_products_error() {
+  ?>
+  <div class="notice notice-error is-dismissible">
+      <p><?php _e( 'Si è verificato un errore durante il selezionamento dei prodotti.', '' ); ?></p>
   </div>
   <?php
 }
