@@ -74,6 +74,8 @@ function setup_menu(){
 class ProductList extends WP_List_Table {
 
   var $products = array();
+  var $active_jobs = array();
+  var $queue_jobs = array();
 
   function __construct(){
     $selected_categories = '';
@@ -101,7 +103,7 @@ class ProductList extends WP_List_Table {
     ) );
 
     add_action( 'admin_head', array( &$this, 'admin_header' ) );
-
+    $this->check_cron_jobs();
     }
 
   function admin_header() {
@@ -338,12 +340,25 @@ class ProductList extends WP_List_Table {
     }
     return;
   }
+
+  function check_cron_jobs() {
+    $jobs = get_option( 'cron' );
+    foreach($jobs as $job){
+      if ( is_array($job) and array_key_exists( 'action_change_prices', $job) ){
+        array_push($this->queue_jobs, $job['action_change_prices']);
+      }
+      if ( is_array($job) and array_key_exists( 'action_remove_prices', $job) ){
+        array_push($this->active_jobs, $job['action_remove_prices']);
+      }
+    }
+  }
+
 }
 
 function setup_page(){
   $myListTable = new ProductList();
   echo '<div class="wrap"><h1>WC Price Changer</h1>';
-  check_active_jobs();
+  check_active_jobs($myListTable->active_jobs, $myListTable->queue_jobs);
   $myListTable->prepare_items();
   if(isset($_POST['preview'])){
     setup_price_changer($_SESSION['submit-type']);
@@ -567,18 +582,7 @@ function notice_active_jobs() {
   <?php
 }
 
-function check_active_jobs() {
-  $jobs = get_option( 'cron' );
-  $queue_jobs = array();
-  $active_jobs = array();
-  foreach($jobs as $job){
-    if ( is_array($job) and array_key_exists( 'action_change_prices', $job) ){
-      array_push($queue_jobs, $job['action_change_prices']);
-    }
-    if ( is_array($job) and array_key_exists( 'action_remove_prices', $job) ){
-      array_push($active_jobs, $job['action_remove_prices']);
-    }
-  }
+function check_active_jobs($active_jobs, $queue_jobs) {
   if ( $queue_jobs ) {
     notice_queue_jobs();
   }
