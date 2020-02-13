@@ -291,9 +291,16 @@ class ProductList extends WP_List_Table {
       $attributes = "class='$classes' $data";
 
       if ( 'cb' === $column_name ) {
-          echo '<th scope="row" class="check-column">';
-          echo $this->column_cb( $item );
-          echo '</th>';
+        $column_cb_style = '';
+        if ( in_array( $item->get_id(), $this->get_queue_products_ids() ) ){
+          $column_cb_style = 'border-left: 4px solid #fff; border-left-color: #46b450;';
+        }
+        else if ( in_array( $item->get_id(), $this->get_active_products_ids() ) ){
+          $column_cb_style = 'border-left: 4px solid #fff; border-left-color: #ffb900;';
+        }
+        echo '<th style="' . $column_cb_style . '" scope="row" class="check-column">';
+        echo $this->column_cb( $item );
+        echo '</th>';
       } elseif ( method_exists( $this, '_column_' . $column_name ) ) {
           echo call_user_func(
               array( $this, '_column_' . $column_name ),
@@ -351,6 +358,28 @@ class ProductList extends WP_List_Table {
         array_push($this->active_jobs, $job['action_remove_prices']);
       }
     }
+  }
+
+  function get_active_products_ids(){
+    $active_products = array();
+    foreach($this->active_jobs as $job){
+      $args = reset($job)['args'][0];
+      foreach($args as $id){
+        array_push($active_products, $id);
+      }
+    }
+    return $active_products;
+  }
+
+  function get_queue_products_ids(){
+    $queue_products = array();
+    foreach($this->queue_jobs as $job){
+      $args = reset($job)['args'][0];
+      foreach($args as $id){
+        array_push($queue_products, $id);
+      }
+    }
+    return $queue_products;
   }
 
 }
@@ -586,7 +615,7 @@ function check_active_jobs($active_jobs, $queue_jobs) {
   if ( $queue_jobs ) {
     notice_queue_jobs();
   }
-  if ( $active_jobs ) {
+  else if ( $active_jobs ) {
     notice_active_jobs();
   }
 }
