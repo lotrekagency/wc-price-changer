@@ -343,6 +343,7 @@ class ProductList extends WP_List_Table {
 function setup_page(){
   $myListTable = new ProductList();
   echo '<div class="wrap"><h1>WC Price Changer</h1>';
+  check_active_jobs();
   $myListTable->prepare_items();
   if(isset($_POST['preview'])){
     setup_price_changer($_SESSION['submit-type']);
@@ -550,4 +551,39 @@ function action_notice_schedule_change() {
   <?php
 }
 
+function notice_queue_jobs() {
+  ?>
+  <div class="notice notice-success">
+      <p><?php _e( 'Ci sono eventi di cambio prezzi in coda.', '' ); ?></p>
+  </div>
+  <?php
+}
+
+function notice_active_jobs() {
+  ?>
+  <div class="notice notice-warning">
+      <p><?php _e( 'Ci sono cambi di prezzo attivi.', '' ); ?></p>
+  </div>
+  <?php
+}
+
+function check_active_jobs() {
+  $jobs = get_option( 'cron' );
+  $queue_jobs = array();
+  $active_jobs = array();
+  foreach($jobs as $job){
+    if ( is_array($job) and array_key_exists( 'action_change_prices', $job) ){
+      array_push($queue_jobs, $job['action_change_prices']);
+    }
+    if ( is_array($job) and array_key_exists( 'action_remove_prices', $job) ){
+      array_push($active_jobs, $job['action_remove_prices']);
+    }
+  }
+  if ( $queue_jobs ) {
+    notice_queue_jobs();
+  }
+  if ( $active_jobs ) {
+    notice_active_jobs();
+  }
+}
 ?>
