@@ -39,11 +39,9 @@ function setup_menu(){
       if ( isset($_POST['only-variations']) ){
         $variations = array();
         foreach($products as $product){
-          array_push($variations, $product);
-          if ($product instanceof WC_Product_Variable){
-            foreach($product->get_available_variations() as $product_variation){
-              array_push($variations, wc_get_product($product_variation['variation_id']));
-            }
+          $product_retrieved = wc_get_product($product);
+          if ( $product_retrieved->is_type('variation') ) {
+            array_push($variations, $product);
           }
         }
         $products = $variations;
@@ -465,7 +463,7 @@ function setup_price_changer($type){
         if($_SESSION['viewing'] == 'variations'){
           echo '<tr><td><br></td></tr>';
           echo '<tr><td>';
-          echo '<input type="checkbox" name="only-variations" checked>';
+          echo '<input type="checkbox" name="only-variations" ' . (isset($_POST['only-variations']) ? 'checked' : '') . '>';
           echo '<label for="only-variations">Applica cambio di prezzo solo alle variazioni.</label>';
           echo '</td></tr>';
         }
@@ -497,7 +495,7 @@ function setup_price_changer($type){
             $products = $_SESSION['products'];
             foreach ($products as $product){
               $product_retrieved = wc_get_product($product);
-              if ( (isset( $_POST['viewing'] ) and $_POST['viewing'] == 'variations') or (isset( $_POST['only-variations']) and $_POST['only-variations'] == 'on') ){
+              if ( isset( $_POST['only-variations']) ){
                 if ( !$product_retrieved->is_type('variation') ) {
                   continue;
                 }
