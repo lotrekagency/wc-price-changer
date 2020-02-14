@@ -1,0 +1,11 @@
+.table-jobs{
+  width: 100%;
+}
+.div-table-jobs-active{
+  max-height: 500px !important;
+}
+.div-table-jobs-hidden{
+  max-height: 0px;
+  overflow: hidden;
+  transition: all 1s ease;
+}
