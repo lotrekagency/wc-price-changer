@@ -6,11 +6,14 @@
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
+?>
+<?php
 define('ALTERNATE_WP_CRON', true);
 init_plugin();
 
 function init_plugin(){
   session_start();
+  add_action('admin_enqueue_scripts', 'add_scripts');
   add_action('admin_menu', 'setup_menu');
   add_action('apply_price_changes', 'apply');
   add_action('action_change_prices', 'change_prices', 10, 4);
@@ -611,8 +614,66 @@ function action_notice_schedule_change() {
 
 function notice_queue_jobs() {
   ?>
-  <div class="notice notice-success">
+  <div id="can-view-activities" class="notice notice-success">
       <p><?php _e( 'Ci sono eventi di cambio prezzi in coda.', '' ); ?></p>
+      <div id="div-table-jobs" class="div-table-jobs-hidden">
+      <table class="table-jobs">
+        <thead style="text-align: left">
+          <tr>
+            <th>Evento</th>
+            <th>Data</th>
+            <th>Ora</th>
+            <th>Prodotti</th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php
+        $jobs = get_option('cron');
+        $all_jobs = array();
+        foreach($jobs as $timestamp=>$job){
+          if ( is_array($job) and array_key_exists( 'action_change_prices', $job) ){
+            $all_jobs[$timestamp] = $job;
+          }
+          else if ( is_array($job) and array_key_exists( 'action_remove_prices', $job) ){
+            $all_jobs[$timestamp] = $job;
+          }
+        }
+
+        foreach($all_jobs as $timestamp=>$job){
+          $text = '';
+          $job_change = null;
+          if( array_key_exists( 'action_change_prices', $job) ){
+            $job_change = $job['action_change_prices'];
+            $text = 'Inizio ';
+          } else {
+            $job_change = $job['action_remove_prices'];
+            $text = 'Fine ';
+          }
+          $value = '';
+          if ( reset($job_change)['args'][3] == 'unit' ) {
+            $value = 'di ' .  reset($job_change)['args'][2] . ' €';
+          }
+          else {
+            $value = 'del ' .  reset($job_change)['args'][2] . ' %';
+          }
+          $type = '';
+          if (reset($job_change)['args'][1] == 'dec' ) {
+            $type = 'dello sconto ';
+          } else {
+            $type = "dell' aumento ";
+          }
+          echo '<tr>';
+          echo "<td>" . $text . $type . $value . "</td>";
+          echo '<td>' . date('m/d/Y', $timestamp) . '</td>';
+          echo '<td>' . date('H:i:s', $timestamp) . '</td>';
+          echo '<td>' . implode(reset($job_change)['args'][0]) . '</td>';
+          echo '</tr>';
+        }
+        ?>
+        </tbody>
+      </table>
+      </div>
+      <a name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
   </div>
   <?php
 }
@@ -640,5 +701,10 @@ function check_active_jobs($active_jobs, $queue_jobs) {
   else if ( $active_jobs ) {
     notice_active_jobs();
   }
+}
+
+function add_scripts(){
+  wp_enqueue_style( 'wc-price-changer-style', plugin_dir_url( __FILE__  ) . 'scripts/style.css');
+  wp_enqueue_script( 'wc-price-changer-script', plugin_dir_url( __FILE__  ) . 'scripts/script.js');
 }
 ?>
