@@ -619,8 +619,8 @@ function notice_queue_jobs() {
       <div id="div-table-jobs" class="div-table-jobs-hidden">
       <table class="table-jobs">
         <thead style="text-align: left">
-          <tr>
-            <th>Evento</th>
+          <tr style="background-color: #e6e6e6">
+            <th style='padding-left: 10px'>Evento</th>
             <th>Data</th>
             <th>Ora</th>
             <th>Prodotti</th>
@@ -642,12 +642,15 @@ function notice_queue_jobs() {
         foreach($all_jobs as $timestamp=>$job){
           $text = '';
           $job_change = null;
+          $style = '';
           if( array_key_exists( 'action_change_prices', $job) ){
             $job_change = $job['action_change_prices'];
             $text = 'Inizio ';
+            $style = 'background-color: #daf1dc';
           } else {
             $job_change = $job['action_remove_prices'];
             $text = 'Fine ';
+            $style = 'background-color: #fff1cc';
           }
           $value = '';
           if ( reset($job_change)['args'][3] == 'unit' ) {
@@ -662,8 +665,8 @@ function notice_queue_jobs() {
           } else {
             $type = "dell' aumento ";
           }
-          echo '<tr>';
-          echo "<td>" . $text . $type . $value . "</td>";
+          echo '<tr style="' . $style . '">';
+          echo "<td style='padding-left: 10px'>" . $text . $type . $value . "</td>";
           echo '<td>' . get_date_from_gmt( date( 'm/d/Y', $timestamp), 'm/d/Y' ) . '</td>';
           echo '<td>' . get_date_from_gmt( date( 'H:i:s', $timestamp), 'H:i:s' ) . '</td>';
           echo '<td>' . implode(reset($job_change)['args'][0]) . '</td>';
