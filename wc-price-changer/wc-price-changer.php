@@ -664,8 +664,8 @@ function notice_queue_jobs() {
           }
           echo '<tr>';
           echo "<td>" . $text . $type . $value . "</td>";
-          echo '<td>' . date('m/d/Y', $timestamp) . '</td>';
-          echo '<td>' . date('H:i:s', $timestamp) . '</td>';
+          echo '<td>' . get_date_from_gmt( date( 'm/d/Y', $timestamp), 'm/d/Y' ) . '</td>';
+          echo '<td>' . get_date_from_gmt( date( 'H:i:s', $timestamp), 'H:i:s' ) . '</td>';
           echo '<td>' . implode(reset($job_change)['args'][0]) . '</td>';
           echo '</tr>';
         }
