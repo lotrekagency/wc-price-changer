@@ -639,38 +639,37 @@ function notice_queue_jobs() {
           }
         }
 
-        foreach($all_jobs as $timestamp=>$job){
-          $text = '';
-          $job_change = null;
-          $style = '';
-          if( array_key_exists( 'action_change_prices', $job) ){
-            $job_change = $job['action_change_prices'];
-            $text = 'Inizio ';
-            $style = 'background-color: #daf1dc';
-          } else {
-            $job_change = $job['action_remove_prices'];
-            $text = 'Fine ';
-            $style = 'background-color: #fff1cc';
+        foreach( $all_jobs as $timestamp=>$time_jobs ){
+          foreach ( $time_jobs as $action=>$job ) {
+            $text = '';
+            $style = '';
+            if( $action == 'action_change_prices' ){
+              $text = 'Inizio ';
+              $style = 'background-color: #daf1dc';
+            } else {
+              $text = 'Fine ';
+              $style = 'background-color: #fff1cc';
+            }
+            $value = '';
+            if ( reset($job)['args'][3] == 'unit' ) {
+              $value = 'di ' .  reset($job)['args'][2] . ' €';
+            }
+            else {
+              $value = 'del ' .  reset($job)['args'][2] . ' %';
+            }
+            $type = '';
+            if (reset($job)['args'][1] == 'dec' ) {
+              $type = 'dello sconto ';
+            } else {
+              $type = "dell' aumento ";
+            }
+            echo '<tr style="' . $style . '">';
+            echo "<td style='padding-left: 10px'>" . $text . $type . $value . "</td>";
+            echo '<td>' . get_date_from_gmt( date( 'm/d/Y', $timestamp), 'm/d/Y' ) . '</td>';
+            echo '<td>' . get_date_from_gmt( date( 'H:i:s', $timestamp), 'H:i:s' ) . '</td>';
+            echo '<td>' . implode(reset($job)['args'][0]) . '</td>';
+            echo '</tr>';
           }
-          $value = '';
-          if ( reset($job_change)['args'][3] == 'unit' ) {
-            $value = 'di ' .  reset($job_change)['args'][2] . ' €';
-          }
-          else {
-            $value = 'del ' .  reset($job_change)['args'][2] . ' %';
-          }
-          $type = '';
-          if (reset($job_change)['args'][1] == 'dec' ) {
-            $type = 'dello sconto ';
-          } else {
-            $type = "dell' aumento ";
-          }
-          echo '<tr style="' . $style . '">';
-          echo "<td style='padding-left: 10px'>" . $text . $type . $value . "</td>";
-          echo '<td>' . get_date_from_gmt( date( 'm/d/Y', $timestamp), 'm/d/Y' ) . '</td>';
-          echo '<td>' . get_date_from_gmt( date( 'H:i:s', $timestamp), 'H:i:s' ) . '</td>';
-          echo '<td>' . implode(reset($job_change)['args'][0]) . '</td>';
-          echo '</tr>';
         }
         ?>
         </tbody>
