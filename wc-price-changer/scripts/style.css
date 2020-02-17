@@ -10,5 +10,5 @@
 .div-table-jobs-hidden{
   max-height: 0px;
   overflow: hidden;
-  transition: all 1s ease;
+  transition: all 0.7s ease;
 }

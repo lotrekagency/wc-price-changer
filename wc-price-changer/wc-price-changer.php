@@ -675,7 +675,7 @@ function notice_queue_jobs() {
         </tbody>
       </table>
       </div>
-      <a name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
+      <a id="link-activities" name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
   </div>
   <?php
 }
