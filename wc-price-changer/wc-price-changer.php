@@ -612,11 +612,9 @@ function action_notice_schedule_change() {
   <?php
 }
 
-function notice_queue_jobs() {
+function construct_queue_table() {
   ?>
-  <div id="can-view-activities" class="notice notice-success">
-      <p><?php _e( 'Ci sono eventi di cambio prezzi in coda.', '' ); ?></p>
-      <div id="div-table-jobs" class="div-table-jobs-hidden">
+  <div id="div-table-jobs" class="div-table-jobs-hidden">
       <table class="table-jobs">
         <thead style="text-align: left">
           <tr style="background-color: #e6e6e6">
@@ -667,7 +665,7 @@ function notice_queue_jobs() {
             echo "<td style='padding-left: 10px'>" . $text . $type . $value . "</td>";
             echo '<td>' . get_date_from_gmt( date( 'm/d/Y', $timestamp), 'm/d/Y' ) . '</td>';
             echo '<td>' . get_date_from_gmt( date( 'H:i:s', $timestamp), 'H:i:s' ) . '</td>';
-            echo '<td>' . implode(reset($job)['args'][0]) . '</td>';
+            echo '<td>' . implode(', ', reset($job)['args'][0]) . '</td>';
             echo '</tr>';
           }
         }
@@ -675,6 +673,14 @@ function notice_queue_jobs() {
         </tbody>
       </table>
       </div>
+  <?php
+}
+
+function notice_queue_jobs() {
+  ?>
+  <div id="can-view-activities" class="notice notice-success">
+      <p><?php _e( 'Ci sono eventi di cambio prezzi in coda.', '' ); ?></p>
+      <?php construct_queue_table(); ?>
       <a id="link-activities" name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
   </div>
   <?php
@@ -684,6 +690,8 @@ function notice_active_jobs() {
   ?>
   <div class="notice notice-warning">
       <p><?php _e( 'Ci sono cambi di prezzo attivi.', '' ); ?></p>
+      <?php construct_queue_table(); ?>
+      <a id="link-activities" name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
   </div>
   <?php
 }
