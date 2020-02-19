@@ -507,7 +507,7 @@ function setup_price_changer($type){
                 if ( !$product_retrieved->is_type('variation') ) {
                   continue;
                 } else {
-                  array_push($table_array, $product);
+                  array_push($table_products, $product);
                 }
               }
             } else {
