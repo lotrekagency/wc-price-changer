@@ -5,7 +5,7 @@ This is a WooCommerce plugin for handling temporary prices.
 
 First of all clone the project or download the zip file in the repository.
 
-Then install the file *wc-price-changer.php* into the plugin section of your WordPress site and activate it.
+Then install the file *wc-price-changer.zip* into the plugin section of your WordPress site and activate it.
 
 ## Usage
 
