@@ -28,6 +28,9 @@ function setup_menu(){
     if (isset($_POST['viewing'])){
       $_SESSION['viewing'] = $_POST['viewing'];
     }
+    if (!isset($_SESSION['viewing'])){
+      $_SESSION['viewing'] = 'products';
+    }
     add_submenu_page(
       'woocommerce',
       'Price Changer',
@@ -52,10 +55,10 @@ function setup_menu(){
       if ( $products ) {
         $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
         if($_POST['datetime-start']){
-          $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone(get_option('timezone_string')));
+          $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone('Europe/Berlin'));
           wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
           if($_POST['datetime-end']){
-            $datetime_end = new DateTime($_POST['datetime-end'], new DateTimeZone(get_option('timezone_string')));
+            $datetime_end = new DateTime($_POST['datetime-end'], new DateTimeZone('Europe/Berlin'));
             wp_schedule_single_event($datetime_end->format('U'), 'action_remove_prices', $action_args);
           }
           add_action( 'admin_notices', 'action_notice_schedule_change' );
@@ -639,6 +642,9 @@ function construct_queue_table() {
 
         foreach( $all_jobs as $timestamp=>$time_jobs ){
           foreach ( $time_jobs as $action=>$job ) {
+            $date = new DateTime();
+            $date->setTimestamp($timestamp);
+            $date->setTimezone(new DateTimeZone('Europe/Berlin'));
             $text = '';
             $style = '';
             if( $action == 'action_change_prices' ){
@@ -663,8 +669,8 @@ function construct_queue_table() {
             }
             echo '<tr style="' . $style . '">';
             echo "<td style='padding-left: 10px'>" . $text . $type . $value . "</td>";
-            echo '<td>' . get_date_from_gmt( date( 'm/d/Y', $timestamp), 'm/d/Y' ) . '</td>';
-            echo '<td>' . get_date_from_gmt( date( 'H:i:s', $timestamp), 'H:i:s' ) . '</td>';
+            echo '<td>' . $date->format('d/m/Y') . '</td>';
+            echo '<td>' . $date->format('H:i:s') . '</td>';
             echo '<td>' . implode(', ', reset($job)['args'][0]) . '</td>';
             echo '</tr>';
           }
