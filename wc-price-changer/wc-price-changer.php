@@ -90,7 +90,7 @@ class ProductList extends WP_List_Table {
     if(isset($_POST['categories'])){
       $selected_categories = $_POST['categories'];
     }
-    $this->products = wc_get_products(array('status' => 'publish', 'category' => $selected_categories));
+    $this->products = wc_get_products(array('status' => 'publish', 'category' => $selected_categories, 'limit' => -1));
     if($_SESSION['viewing'] == 'variations'){
       $variations = array();
       foreach($this->products as $product){
