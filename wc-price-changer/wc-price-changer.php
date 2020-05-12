@@ -8,7 +8,6 @@
  */
 ?>
 <?php
-define('ALTERNATE_WP_CRON', true);
 init_plugin();
 
 function init_plugin(){
