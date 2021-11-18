@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       WC Price Changer
  * Description:       Manage your products prices smartly.
- * Version:           0.0.1
+ * Version:           1.1.0
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
