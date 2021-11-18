@@ -15,8 +15,8 @@ function init_plugin(){
   add_action('admin_enqueue_scripts', 'add_scripts');
   add_action('admin_menu', 'setup_menu');
   add_action('apply_price_changes', 'apply');
-  add_action('action_change_prices', 'change_prices', 10, 4);
-  add_action('action_remove_prices', 'remove_prices', 10, 4);
+  add_action('action_change_prices', 'change_prices', 10, 5);
+  add_action('action_remove_prices', 'remove_prices', 10, 5);
   if (!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
   }
@@ -52,7 +52,7 @@ function setup_menu(){
         $products = $variations;
       }
       if ( $products ) {
-        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type']);
+        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type'], isset($_POST['enable_translations']));
         if($_POST['datetime-start']){
           $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone('Europe/Berlin'));
           wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
@@ -453,9 +453,13 @@ function setup_price_changer($type){
         <label for="price">Valore percentuale di modifica (%)</label><br>
         <input type="number" value="<?php echo $_POST['value'];?>" name="value" required="required" min="1" max="100">
         </td>
-      <?php
-      }
-    ?>
+      <?php } ?>
+      <?php if ( class_exists( 'Sitepress' ) ) :?>
+        <td>
+          <input type="checkbox" name="enable_translations" checked>
+          <label for="enable_translations">Modifica prezzo anche per le traduzioni dei prodotti.</label><br>
+        </td>
+      <?php endif; ?>
       </tr>
       <tr>
         <td>
@@ -541,41 +545,102 @@ function setup_price_changer($type){
   <?php
 }
 
-function change_prices($ids, $choice, $value, $operation){
+function change_prices($ids, $choice, $value, $operation, $enable_translations){
   foreach ( $ids as $product ){
     $product_retrieved = wc_get_product($product);
-    set_prices($product_retrieved, calculate_final_price((float)$product_retrieved->get_regular_price(), $choice, $value, $operation), $choice);
+    set_prices($product_retrieved, calculate_final_price((float)$product_retrieved->get_regular_price(), $choice, $value, $operation), $choice, $enable_translations);
   }
 }
 
-function set_prices($product, $new_price, $choice){
-  if ( $choice == 'inc' ){
-    $product->set_price($new_price);
-    $product->set_regular_price($new_price);
-  } else {
-    $product->set_sale_price($new_price);
-  }
-  $product->save();
-}
-
-function remove_prices($ids, $choice, $value, $operation){
-  foreach ( $ids as $product ){
-    $product_retrieved = wc_get_product($product);
-    $product_retrieved_price = (float)$product_retrieved->get_regular_price();
-
+function set_prices($product, $new_price, $choice, $enable_translations){
+  if ($enable_translations) {
+    $wpml_trid = apply_filters( 'wpml_element_trid', '', $product->get_id());
+    $wpml_product_translations = apply_filters( 'wpml_get_element_translations', '', $wpml_trid);
+    
     if ( $choice == 'inc' ){
-      if ( $operation == 'percentage' ){
-        $product_retrieved->set_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
-        $product_retrieved->set_regular_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
-      }
-      else {
-        $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price - $value));
-        $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price - $value));
+      foreach( $wpml_product_translations as $translation) {
+        $product_translation = wc_get_product($translation->element_id);
+        $product_translation->set_price($new_price);
+        $product_translation->set_regular_price($new_price);
+        $product_translation->save();
       }
     } else {
-      $product_retrieved->set_sale_price('');
+      foreach( $wpml_product_translations as $translation) {
+        $product_translation = wc_get_product($translation->element_id);
+        $product_translation->set_sale_price($new_price);
+        $product_translation->save();
+      }
     }
-    $product_retrieved->save();
+  }
+  else {
+    if ( $choice == 'inc' ){
+      $product->set_price($new_price);
+      $product->set_regular_price($new_price);
+    } else {
+      $product->set_sale_price($new_price);
+    }
+    $product->save();
+  }
+}
+
+function remove_prices($ids, $choice, $value, $operation, $enable_translations){
+  if ($enable_translations) {
+    foreach ( $ids as $product ){
+      $product_retrieved = wc_get_product($product);
+      $product_retrieved_price = (float)$product_retrieved->get_regular_price();
+
+      $wpml_trid = apply_filters( 'wpml_element_trid', '', $product_retrieved->get_id());
+      $wpml_product_translations = apply_filters( 'wpml_get_element_translations', '', $wpml_trid);
+
+      if ( $choice == 'inc' ){
+        if ( $operation == 'percentage' ){
+          foreach( $wpml_product_translations as $translation) {
+            $product_translation = wc_get_product($translation->element_id);
+            $product_translation->set_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
+            $product_translation->set_regular_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
+            $product_translation->save();
+          }
+        }
+        else {
+          foreach( $wpml_product_translations as $translation) {
+            $product_translation = wc_get_product($translation->element_id);
+            $product_translation->set_price(sprintf("%.2f",  $product_retrieved_price - $value));
+            $product_translation->set_regular_price(sprintf("%.2f",  $product_retrieved_price - $value));
+            $product_translation->save();
+          }
+        }
+      } else {
+        foreach( $wpml_product_translations as $translation) {
+          $product_translation = wc_get_product($translation->element_id);
+          $product_translation->set_regular_price($product_retrieved->get_regular_price());
+          $product_translation->set_price($product_retrieved->get_regular_price());
+          update_post_meta($product_translation->get_id(), '_price', $product_retrieved->get_regular_price());
+          $product_translation->set_sale_price('');
+          $product_translation->save();
+
+        }
+      }
+    }
+  }
+  else {
+    foreach ( $ids as $product ){
+      $product_retrieved = wc_get_product($product);
+      $product_retrieved_price = (float)$product_retrieved->get_regular_price();
+  
+      if ( $choice == 'inc' ){
+        if ( $operation == 'percentage' ){
+          $product_retrieved->set_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
+          $product_retrieved->set_regular_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
+        }
+        else {
+          $product_retrieved->set_price(sprintf("%.2f",  $product_retrieved_price - $value));
+          $product_retrieved->set_regular_price(sprintf("%.2f",  $product_retrieved_price - $value));
+        }
+      } else {
+        $product_retrieved->set_sale_price('');
+      }
+      $product_retrieved->save();
+    }
   }
 }
 
