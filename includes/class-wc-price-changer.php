@@ -52,7 +52,7 @@
             }
 
             public function display_action() {
-                if ( isset( $_POST['action'] ) ) {
+                if ( isset( $_POST['action'] ) && $_POST['action'] != -1 ) {
                     $this->action_interface = new WCP_Action_Interface();
                 }
             }
