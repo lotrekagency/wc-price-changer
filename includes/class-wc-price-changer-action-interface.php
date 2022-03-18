@@ -11,36 +11,66 @@
 
         class WCP_Action_Interface {
 
+            var $products;
+            var $mode;
+            var $choice = 'dec';
+
             function __construct() {
-                $this->load_dependencies();
+                $this->get_data();
                 $this->display();
             }
 
-            public function load_dependencies() {
-
+            public function get_data() {
+                $this->products = $_POST['products'];
+                $this->mode = $_POST['action'];
+                $this->choice = isset( $_POST['choice'] ) ? $_POST['choice'] : $this->choice;
             }
 
             public function display() {
-
                 echo '
-                    <div class="postbox">
-                    <div class="wrap form-price-changer inside">
-                        <form>
-                            <table class="form-table">
-                                <tr>
-                                    <th scope="row">
-                                        <label for="choice">Tipo di modifica</label>
-                                    </th>
-                                    <td>
-                                        <select name="choice" id="choice">
-                                            <option value="dec">Decremento</option>
-                                            <option value="dec">Incremento</option>
-                                        </select>
-                                    </td>
-                                </tr>';
-                
-                if (TRUE) {
-                    echo '
+                    <div id="poststuff">
+                        <div id="post-body" class="metabox-holder columns-2">
+                            <div id="post-body-content" class="interface-card">
+                                <div class="meta-box-sortables ui-sortable">
+                                    <div class="postbox interface-card">
+                                        <div class="inside">
+                                            ' . $this->display_form() . '
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="postbox-container-1" class="postbox-container">
+                                <div class="meta-box-sortables">
+                                    <div class="postbox interface-card">
+                                        <div class="inside">
+                                            ' . $this->display_products() . '
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br class="clear">
+                    </div>';
+            }
+
+            public function display_form() {
+                $form_html = '
+                    <form>
+                        <table class="form-table">
+                            <tr>
+                                <th scope="row">
+                                    <label for="choice">Tipo di modifica</label>
+                                </th>
+                                <td>
+                                    <select name="choice" id="choice">
+                                        <option value="dec" ' . ($this->choice == 'dec' ? 'selected' : '') . '>Decremento</option>
+                                        <option value="inc" ' . ($this->choice == 'inc' ? 'selected' : '') . '>Incremento</option>
+                                    </select>
+                                </td>
+                            </tr>';
+
+                if ( $this->mode == 'price-change-unit' ) {
+                    $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="value">Valore di modifica (€)</label>
@@ -50,8 +80,8 @@
                             </td>
                         </tr>';
                 }
-                if (TRUE) {
-                    echo '
+                if ( $this->mode == 'price-change-percentage' ) {
+                    $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="value">Valore percentuale di modifica (%)</label>
@@ -63,7 +93,7 @@
                 }
 
                 if (TRUE) {
-                    echo '
+                    $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="enable_translations">Modifica prezzo anche per le traduzioni dei prodotti</label>
@@ -74,7 +104,7 @@
                         </tr>';
                 }
 
-                echo '
+                $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="datetime-start">Data e ora di inizio</label>
@@ -84,7 +114,7 @@
                             </td>
                         </tr>';
 
-                echo '
+                $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="datetime-end">Data e ora di fine</label>
@@ -94,12 +124,32 @@
                             </td>
                         </tr>';
                 
+                $form_html .= '</table>';
+                $form_html .= '<p class="submit"><input type="submit" name="preview" id="preview" class="button" value="Preview"><input type="submit" name="submit" id="submit" class="button button-primary" value="Apply"></p>';
+                $form_html .= '</form>';
+                return $form_html;
+            }
 
-                echo '</table>';
-                echo '<p class="submit">' . submit_button( 'Anteprima', 'secondary', 'preview', false ) . submit_button( 'Apply', 'primary', 'submit', false ) . '</p>';
-                echo '</form></div>';
-                
-                echo '</div>';
+            public function display_products() {
+                $table_html =  '
+                    <div class="table-products">
+                        <table class="widefat">
+                            <tbody>
+                                <tr class="alternate">
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                </tr>';
+                foreach ( $this->products as $product ) {
+                    $table_html .= '
+                        <tr>
+                            <th>' . $product . '</th>
+                            <th></th>
+                        </tr>';
+                }              
+                $table_html .= '</tbody>
+                    </table></div>
+                ';
+                return $table_html;
             }
 
         }

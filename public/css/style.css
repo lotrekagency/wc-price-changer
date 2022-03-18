@@ -12,3 +12,13 @@
   overflow: hidden;
   transition: all 0.7s ease;
 }
+
+.interface-card {
+  max-height: 470px !important;
+  height: 470px !important;
+}
+
+.table-products{
+  height: 100%;
+  overflow-y: scroll;
+}
