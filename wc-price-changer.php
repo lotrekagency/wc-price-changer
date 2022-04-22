@@ -23,7 +23,7 @@ function init_plugin(){
 }
 
 function setup_menu(){
-  if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))){
+  if ( class_exists( 'WooCommerce' ) ) {
     if (isset($_POST['viewing'])){
       $_SESSION['viewing'] = $_POST['viewing'];
     }
