@@ -32,6 +32,10 @@
                 wp_enqueue_style( 'wpc-interface-style', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/style.css' );
             }
 
+            private function is_action_seleted() {
+                return isset( $_POST['action'] ) && $_POST['action'] != -1;
+            }
+
             public function define_menu() {
                 add_submenu_page(
                     'woocommerce',
@@ -47,13 +51,13 @@
                 echo '<div class="wrap">';
                 echo '<h1>WC Price Changer</h1>';
                 $this->display_action();
-                $this->list_table = new WCP_Product_List();
+                $this->list_table = new WCPC_Product_List();
                 echo '</div>';
             }
 
             public function display_action() {
-                if ( isset( $_POST['action'] ) && $_POST['action'] != -1 ) {
-                    $this->action_interface = new WCP_Action_Interface();
+                if ( $this->is_action_seleted() ) {
+                    $this->action_interface = new WCPC_Action_Interface();
                 }
             }
         }

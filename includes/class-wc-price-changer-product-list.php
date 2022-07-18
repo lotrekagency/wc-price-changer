@@ -9,7 +9,7 @@
 
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 
-    class WCP_Product_List extends WP_List_Table {
+    class WCPC_Product_List extends WP_List_Table {
 
         var $products = array();
         var $product_categories = array();
@@ -78,9 +78,9 @@
                 case 'category':
                     return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
                 case 'price':
-                    return $item->get_regular_price();
+                    return wc_price( $item->get_regular_price() );
                 case 'sale_price':
-                    return $item->get_sale_price() ? $item->get_sale_price() : '-';
+                    return $item->get_sale_price() ? wc_price( $item->get_sale_price() ) : '-';
                 case 'id':
                     return $item->get_id();
                 default:
