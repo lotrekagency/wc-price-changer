@@ -101,8 +101,8 @@
 
         public function get_bulk_actions() {
             return array(
-                'price-change-unit'         => __( 'Change prices by unit value', 'wc-price-changer' ),
-                'price-change-percentage'   => __( 'Change prices by percentage value', 'wc-price-changer' )
+                'unit'         => __( 'Change prices by unit value', 'wc-price-changer' ),
+                'percentage'   => __( 'Change prices by percentage value', 'wc-price-changer' )
             );
         }
 

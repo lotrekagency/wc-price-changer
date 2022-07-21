@@ -13,11 +13,12 @@
 
             var $products;
             var $mode;
-            var $choice = 'dec';
+            var $operation = 'dec';
 
             function __construct() {
                 $this->load_dependencies();
                 $this->get_data();
+                $this->apply_price_changes();
                 $this->display();
             }
 
@@ -28,15 +29,44 @@
             private function get_data() {
                 $this->products = $_POST['products'];
                 $this->mode = $_POST['action'];
-                $this->choice = isset( $_POST['choice'] ) ? $_POST['choice'] : $this->choice;
+                $this->operation = isset( $_POST['operation'] ) ? $_POST['operation'] : $this->operation;
                 $this->change_value = isset( $_POST['value'] ) ? $_POST['value'] : $this->change_value;
+                $this->datetime_start = isset( $_POST['datetime_start'] ) ? $_POST['datetime_start'] : $this->datetime_start;
+                $this->datetime_end = isset( $_POST['datetime_end'] ) ? $_POST['datetime_end'] : $this->datetime_end;
+            }
+
+            private function apply_price_changes() {
+                if ( $this->is_price_change_applied() ) {
+                    if ( $this->products ) {
+                        $args = array(
+                            'products' => $this->products,
+                            'operation' => $this->operation,
+                            'mode' => $this->mode,
+                            'value' => $this->change_value,
+                            'datetime_start' => $this->parse_datetime( $this->datetime_start )->format('U'),
+                            'datetime_end' => $this->parse_datetime( $this->datetime_end )->format('U'),
+                        );
+                        WCPC_Manager::create_schedule( $args );
+                    }
+                }
             }
 
             private function is_preview_mode() {
                 return isset( $_POST['preview'] );
             }
 
+            private function is_price_change_applied() {
+                return isset( $_POST['submit'] );
+            }
+
+            private function parse_datetime( $string ) {
+                return new DateTime( $string );
+            }
+
             public function display() {
+                if ( $this->is_price_change_applied() )
+                    return;
+                
                 $display_html = '
                     <div id="poststuff">
                         <div id="post-body" class="metabox-holder columns-2">
@@ -88,40 +118,40 @@
                 $form_html = '
                     <form method="post">
                         ' . $product_hidden_html . '
-                        <input type="hidden" name="choice" value="' . $this->choice . '">
+                        <input type="hidden" name="operation" value="' . $this->operation . '">
                         <input type="hidden" name="action" value="' . $this->mode . '">
                         <table class="form-table">
                             <tr>
                                 <th scope="row">
-                                    <label for="choice">Type of change</label>
+                                    <label for="operation">Type of change</label>
                                 </th>
                                 <td>
-                                    <select name="choice" id="choice">
-                                        <option value="dec" ' . ($this->choice == 'dec' ? 'selected' : '') . '>Decrease</option>
-                                        <option value="inc" ' . ($this->choice == 'inc' ? 'selected' : '') . '>Increase</option>
+                                    <select name="operation" id="operation">
+                                        <option value="dec" ' . ($this->operation == 'dec' ? 'selected' : '') . '>Decrease</option>
+                                        <option value="inc" ' . ($this->operation == 'inc' ? 'selected' : '') . '>Increase</option>
                                     </select>
                                 </td>
                             </tr>';
 
-                if ( $this->mode == 'price-change-unit' ) {
+                if ( $this->mode == 'unit' ) {
                     $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="value">Change unit value (' . get_woocommerce_currency_symbol() . ')</label>
                             </th>
                             <td>
-                                <input type="number" name="value" required="true" step="0.01" min="0.01">
+                                <input type="number" name="value" required="true" step="0.01" min="0.01" value="' . $this->change_value . '">
                             </td>
                         </tr>';
                 }
-                if ( $this->mode == 'price-change-percentage' ) {
+                if ( $this->mode == 'percentage' ) {
                     $form_html .= '
                         <tr>
                             <th scope="row">
                                 <label for="value">Change percentage value (%)</label>
                             </th>
                             <td>
-                                <input type="number" name="value" required="true" min="1" max="100">
+                                <input type="number" name="value" required="true" min="1" max="100" value="' . $this->change_value . '">
                             </td>
                         </tr>';
                 }
@@ -141,20 +171,20 @@
                 $form_html .= '
                         <tr>
                             <th scope="row">
-                                <label for="datetime-start">Start datetime</label>
+                                <label for="datetime_start">Start datetime</label>
                             </th>
                             <td>
-                                <input type="datetime-local" name="datetime-start">
+                                <input type="datetime-local" name="datetime_start" value="' . $this->datetime_start . '">
                             </td>
                         </tr>';
 
                 $form_html .= '
                         <tr>
                             <th scope="row">
-                                <label for="datetime-end">End datetime</label>
+                                <label for="datetime_end">End datetime</label>
                             </th>
                             <td>
-                                <input type="datetime-local" name="datetime-end">
+                                <input type="datetime-local" name="datetime_end" value="' . $this->datetime_end . '">
                             </td>
                         </tr>';
                 
@@ -163,6 +193,7 @@
                 $form_html .= '</form>';
                 return $form_html;
             }
+
 
             private function display_products() {
                 $table_html =  '
@@ -195,7 +226,7 @@
                                 <tr class="alternate">
                                     <th>Product</th>
                                     <th>Price</th>
-                                    <th>Price change (' . ( $this->choice == 'dec' ? '↓' : '↑' ) . ')</th>
+                                    <th>Price change (' . ( $this->operation == 'dec' ? '↓' : '↑' ) . ')</th>
                                 </tr>';
                 foreach ( $this->products as $product ) {
                     $product = new WC_Product( $product );
@@ -203,7 +234,7 @@
                         <tr>
                             <th>' . $product->get_name() . '</th>
                             <th>' . wc_price( $product->get_regular_price() ) . '</th>
-                            <th>' . wc_price( WCPC_Manager::calculate_price( $product, $this->mode, $this->choice, $this->change_value ) ) . '</th>
+                            <th>' . wc_price( WCPC_Manager::calculate_price( $product, $this->mode, $this->operation, $this->change_value ) ) . '</th>
                         </tr>';
                 }              
                 $table_html .= '</tbody>
