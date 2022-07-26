@@ -14,10 +14,13 @@
             var $products;
             var $mode;
             var $operation = 'dec';
+            var $manager;
 
             function __construct() {
                 $this->load_dependencies();
+                $this->manager = WCPC_Manager::get_instance();
                 $this->get_data();
+                $this->get_session();
                 $this->apply_price_changes();
                 $this->display();
             }
@@ -27,25 +30,39 @@
             }
 
             private function get_data() {
-                $this->products = $_POST['products'];
+                $this->products = array_map( 'WCPC_Manager::get_product', $_POST['products'] );
                 $this->mode = $_POST['action'];
                 $this->operation = isset( $_POST['operation'] ) ? $_POST['operation'] : $this->operation;
                 $this->change_value = isset( $_POST['value'] ) ? $_POST['value'] : $this->change_value;
                 $this->datetime_start = isset( $_POST['datetime_start'] ) ? $_POST['datetime_start'] : $this->datetime_start;
                 $this->datetime_end = isset( $_POST['datetime_end'] ) ? $_POST['datetime_end'] : $this->datetime_end;
+                $this->only_variations = isset( $_POST['only_variations'] ) ? $_POST['only_variations'] : $this->only_variations;
+                $this->enable_translations = isset( $_POST['enable_translations'] ) ? $_POST['enable_translations'] : $this->enable_translations;
+            }
+
+            private function get_session() {
+                $this->viewing_mode = $_SESSION['wcpc-viewing'];
             }
 
             private function apply_price_changes() {
                 if ( $this->is_price_change_applied() ) {
                     if ( $this->products ) {
                         $args = array(
-                            'products' => $this->products,
                             'operation' => $this->operation,
                             'mode' => $this->mode,
                             'value' => $this->change_value,
                             'datetime_start' => $this->parse_datetime( $this->datetime_start )->format('U'),
                             'datetime_end' => $this->parse_datetime( $this->datetime_end )->format('U'),
                         );
+                        $scheduled_products = $this->products;
+                        if ( $this->only_variations )
+                            $scheduled_products = array_filter( $scheduled_products, function ( $product ) {
+                                return $product->is_type( 'variation' );
+                            } );
+                        $args['products'] = array_map( function ( $product ) {
+                                return $product->get_id();
+                            }, $scheduled_products );
+
                         WCPC_Manager::create_schedule( $args );
                     }
                 }
@@ -114,7 +131,7 @@
 
             private function display_form() {
                 foreach ( $this->products as $product )
-                    $product_hidden_html .= '<input type="hidden" name="products[]" value="' . $product . '">';
+                    $product_hidden_html .= '<input type="hidden" name="products[]" value="' . ( is_object( $product ) ? $product->get_id() : $product ) . '">';
                 $form_html = '
                     <form method="post">
                         ' . $product_hidden_html . '
@@ -156,18 +173,6 @@
                         </tr>';
                 }
 
-                if (TRUE) {
-                    $form_html .= '
-                        <tr>
-                            <th scope="row">
-                                <label for="enable_translations">Apply price change on all product translations</label>
-                            </th>
-                            <td>
-                                <input type="checkbox" name="enable_translations" checked>
-                            </td>
-                        </tr>';
-                }
-
                 $form_html .= '
                         <tr>
                             <th scope="row">
@@ -188,6 +193,30 @@
                             </td>
                         </tr>';
                 
+                if ( $this->viewing_mode == 'variations' ) {
+                    $form_html .= '
+                        <tr>
+                            <th scope="row">
+                                <label for="only_variations">Apply price change only on variations</label>
+                            </th>
+                            <td>
+                                <input type="checkbox" name="only_variations" ' . ( $this->only_variations ? 'checked' : '' ) . '>
+                            </td>
+                        </tr>';
+                }
+
+                if ( $this->is_wpml_enabled() ) {
+                    $form_html .= '
+                        <tr>
+                            <th scope="row">
+                                <label for="enable_translations">Apply price change on all product translations</label>
+                            </th>
+                            <td>
+                                <input type="checkbox" name="enable_translations" ' . ( $this->enable_translations ? 'checked' : '' ) . '>
+                            </td>
+                        </tr>';
+                }
+                
                 $form_html .= '</table>';
                 $form_html .= '<p class="submit">' . get_submit_button( 'Preview', 'secondary', 'preview', false ) . get_submit_button( 'Apply', 'primary', 'submit', false ) . '</p>';
                 $form_html .= '</form>';
@@ -196,6 +225,13 @@
 
 
             private function display_products() {
+                $products = $this->products;
+                if ( $this->only_variations ) {
+                    $products = array_filter( $products, function ( $product ) {
+                        return $product->is_type( 'variation' );
+                    } );
+                }
+
                 $table_html =  '
                     <div class="table-products">
                         <table class="widefat">
@@ -204,8 +240,7 @@
                                     <th>Product</th>
                                     <th>Price</th>
                                 </tr>';
-                foreach ( $this->products as $product ) {
-                    $product = new WC_Product( $product );
+                foreach ( $products as $product ) {
                     $table_html .= '
                         <tr>
                             <th>' . $product->get_name() . '</th>
@@ -219,6 +254,13 @@
             }
 
             private function display_preview() {
+                $products = $this->products;
+                if ( $this->only_variations ) {
+                    $products = array_filter( $products, function ( $product ) {
+                        return $product->is_type( 'variation' );
+                    } );
+                }
+
                 $table_html =  '
                     <div class="table-products">
                         <table class="widefat">
@@ -228,8 +270,7 @@
                                     <th>Price</th>
                                     <th>Price change (' . ( $this->operation == 'dec' ? '↓' : '↑' ) . ')</th>
                                 </tr>';
-                foreach ( $this->products as $product ) {
-                    $product = new WC_Product( $product );
+                foreach ( $products as $product ) {
                     $table_html .= '
                         <tr>
                             <th>' . $product->get_name() . '</th>
@@ -241,6 +282,10 @@
                     </table></div>
                 ';
                 return $table_html;
+            }
+
+            private function is_wpml_enabled() {
+                return class_exists( 'Sitepress' );
             }
 
         }

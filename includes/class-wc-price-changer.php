@@ -18,7 +18,7 @@
                 $this->load_dependencies();
                 $this->load_hooks();
                 $this->manager = WCPC_Manager::get_instance();
-                session_start();
+                $this->load_session();
             }
 
             public function load_dependencies() {
@@ -36,6 +36,18 @@
             public function add_scripts() {
                 wp_enqueue_style( 'wcpc-style', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/style.css' );
                 wp_enqueue_script( 'wcpc-script', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/script.js' );
+            }
+
+            public function load_session() {
+                session_start();
+                
+                if ( isset( $_POST['wcpc-viewing'] ) )
+                    $_SESSION['wcpc-viewing'] = $_POST['wcpc-viewing'];
+                if ( !isset( $_SESSION['wcpc-viewing'] ) )
+                    $_SESSION['wcpc-viewing'] = 'products';
+
+                if ( isset( $_POST['wcpc-category'] ) )
+                    $_SESSION['wcpc-category'] = $_POST['wcpc-category'];
             }
 
             private function is_action_selected() {

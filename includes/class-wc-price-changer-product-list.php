@@ -30,7 +30,7 @@
         }
 
         public function init() {
-            $this->set_session_variables();
+            $this->get_session();
             $this->get_items();
             $this->prepare_items();
             $this->display();
@@ -40,15 +40,7 @@
             require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wc-price-changer-manager.php';
         }
 
-        public function set_session_variables() {
-            if ( isset( $_POST['wcpc-viewing'] ) )
-                $_SESSION['wcpc-viewing'] = $_POST['wcpc-viewing'];
-            if ( !isset( $_SESSION['wcpc-viewing'] ) )
-                $_SESSION['wcpc-viewing'] = 'products';
-
-            if ( isset( $_POST['wcpc-category'] ) )
-                $_SESSION['wcpc-category'] = $_POST['wcpc-category'];
-                
+        public function get_session() {
             $this->viewing_mode = $_SESSION['wcpc-viewing'];
             $this->viewing_category = $_SESSION['wcpc-category'];
         }

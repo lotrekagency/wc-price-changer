@@ -25,7 +25,11 @@
                 return self::$instance;
             }
 
-            public function get_products( $type = 'products', $category ) {
+            public static function get_product ( $id ) {
+                return wc_get_product( $id );
+            }
+
+            public static function get_products( $type = 'products', $category ) {
                 $products = wc_get_products(
                     array(
                         'status' => 'publish',
@@ -47,7 +51,7 @@
                 return $products;
             }
 
-            public function get_product_categories() {
+            public static function get_product_categories() {
                 return get_terms( ['taxonomy' => 'product_cat'] );
             }
 
@@ -165,7 +169,7 @@
                     $final_price = $product->get_regular_price() + ( $product->get_regular_price() / 100 ) * $value;
                 elseif ( $mode == 'unit' )
                     $final_price = $product->get_regular_price() + $value;
-                return $final_price;
+                return $final_price >= 0 ? $final_price : 0;
             }
 
             public static function create_schedule( $args ) {
