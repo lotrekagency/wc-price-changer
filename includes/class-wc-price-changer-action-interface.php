@@ -101,7 +101,7 @@
                     $display_html .= '
                             <div id="postbox-container-1" class="postbox-container">
                                 <div class="meta-box-sortables">
-                                    <div class="postbox interface-card">
+                                    <div class="postbox interface-card scrollable-container">
                                         <div class="inside">
                                             ' . $this->display_products() . '
                                         </div>
@@ -113,7 +113,7 @@
                     $display_html .= '
                             <div id="postbox-container-1" class="postbox-container">
                                 <div class="meta-box-sortables">
-                                    <div class="postbox interface-card">
+                                    <div class="postbox interface-card scrollable-container">
                                         <div class="inside">
                                             ' . $this->display_preview() . '
                                         </div>

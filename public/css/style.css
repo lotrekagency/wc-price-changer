@@ -18,7 +18,10 @@
   height: 470px !important;
 }
 
+.scrollable-container {
+  overflow: scroll;
+}
+
 .table-products{
   height: 100%;
-  overflow-y: scroll;
 }
