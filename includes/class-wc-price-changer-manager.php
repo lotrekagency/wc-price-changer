@@ -29,14 +29,23 @@
                 return wc_get_product( $id );
             }
 
-            public static function get_products( $type = 'products', $category ) {
-                $products = wc_get_products(
-                    array(
-                        'status' => 'publish',
-                        'category' => $category,
-                        'limit' => -1
-                    )
-                );
+            public static function get_products( $type = 'products', $category, $search_term ) {
+                $args = array( 'status' => 'publish', 'limit' => -1 );
+                
+                if ( $category ) {
+                    $args['tax_query'] = array(
+                        array(
+                            'taxonomy' => 'product_cat',
+                            'field' => 'slug',
+                            'terms' => array( $category ),
+                        )
+                    );
+                }
+                if ( $search_term )
+                    $args['s'] = $search_term;
+
+                $query = new WC_Product_Query( $args );
+                $products = $query->get_products();
                 if ( $type == 'variations' ) {
                     $variations = array();
                     foreach ( $products as $product ) {

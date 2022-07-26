@@ -14,6 +14,7 @@
         var $product_categories = array();
         var $viewing_mode = 'products';
         var $viewing_category;
+        var $search_term = '';
         var $manager;
     
         public function __construct() {
@@ -43,10 +44,11 @@
         public function get_session() {
             $this->viewing_mode = $_SESSION['wcpc-viewing'];
             $this->viewing_category = $_SESSION['wcpc-category'];
+            $this->search_term = $_POST['s'];            
         }
 
         public function get_items() {
-            $this->products = $this->manager->get_products( $this->viewing_mode, $this->viewing_category );
+            $this->products = $this->manager->get_products( $this->viewing_mode, $this->viewing_category, $this->search_term );
             $this->product_categories = $this->manager->get_product_categories();
         }
 
@@ -57,8 +59,13 @@
             $this->items = $this->products;
         }
 
+        public function display_search_box() {
+            $this->search_box( 'Search products', 'wcpc-search' );
+        }
+
         public function display() {
             echo '<form method="post">';
+            $this->display_search_box();
             parent::display();
             echo '</form>';
         }
@@ -105,7 +112,7 @@
 
         public function product_filters() {
             echo '
-                <div class="alignright actions bulkactions">
+                <div class="actions bulkactions">
                 ' . $this->product_filter_select()
                 . $this->product_category_filter_select()
                 . get_submit_button( 'Filter', '', 'filter_action', false, array( 'id' => 'post-query-submit' ) ) . '
