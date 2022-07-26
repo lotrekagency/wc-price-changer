@@ -11,9 +11,52 @@
     if ( !class_exists( 'WCPC_Manager' ) ) {
         class WCPC_Manager {
 
-            public function __construct() {
+            private static $instance;
+
+            private function __construct() {
                 add_action( 'wcpc_apply_price_change', array( $this, 'apply_price_change' ), 10 );
                 add_action( 'wcpc_remove_price_change', array( $this, 'remove_price_change' ), 10 );
+                $this->scheduled_actions = $this->get_scheduled_actions();
+            }
+
+            public static function get_instance() : WCPC_Manager {
+                if ( ! isset( self::$instance ) )
+                    self::$instance = new WCPC_Manager();
+                return self::$instance;
+            }
+
+            public function get_products( $type = 'products', $category ) {
+                $products = wc_get_products(
+                    array(
+                        'status' => 'publish',
+                        'category' => $category,
+                        'limit' => -1
+                    )
+                );
+                if ( $type == 'variations' ) {
+                    $variations = array();
+                    foreach ( $products as $product ) {
+                        array_push( $variations, $product );
+                        if ( $product instanceof WC_Product_Variable ) {
+                            foreach ( $product->get_available_variations() as $product_variation )
+                                array_push( $variations, wc_get_product( $product_variation['variation_id'] ) );
+                        }
+                    }
+                    return $variations;
+                }
+                return $products;
+            }
+
+            public function get_product_categories() {
+                return get_terms( ['taxonomy' => 'product_cat'] );
+            }
+
+            public function get_queue_actions() {
+                return $this->scheduled_actions['queue'];
+            }
+
+            public function get_active_actions() {
+                return $this->scheduled_actions['active'];
             }
 
             public function apply_price_change( $args ) {
@@ -132,7 +175,7 @@
 
             public static function remove_schedule() {}
 
-            public static function get_scheduled_actions() {
+            public function get_scheduled_actions() {
                 $jobs = get_option( 'cron' );
                 $queue_jobs = array();
                 $active_jobs = array();
@@ -144,6 +187,28 @@
                         $active_jobs[$timestamp] = $job;
                 }
                 return array( 'queue' => $queue_jobs, 'active' => $active_jobs );
+            }
+
+            public function get_queue_products_ids() {
+                $products_ids = array();
+                foreach ( $this->get_queue_actions() as $queue_jobs ) {
+                    foreach ( $queue_jobs as $job ) {
+                        $job_products_ids = reset( $job )['args']['products'];
+                        $products_ids = array_merge( $products_ids, $job_products_ids );
+                    }
+                }
+                return $products_ids;
+            }
+            
+            public function get_active_products_ids() {
+                $products_ids = array();
+                foreach ( $this->get_active_actions() as $active_jobs ) {
+                    foreach ( $active_jobs as $job ) {
+                        $job_products_ids = reset( $job )['args']['products'];
+                        $products_ids = array_merge( $products_ids, $job_products_ids );
+                    }
+                }
+                return $products_ids;
             }
 
         }

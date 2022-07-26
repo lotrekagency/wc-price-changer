@@ -14,7 +14,7 @@
 
             public function __construct() {
                 $this->load_dependencies();
-                $this->get_scheduled_actions();
+                $this->manager = WCPC_Manager::get_instance();
                 $this->display();
             }
 
@@ -22,21 +22,9 @@
                 require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wc-price-changer-manager.php';
             }
 
-            private function get_scheduled_actions() {
-                $this->scheduled_actions = WCPC_Manager::get_scheduled_actions();
-            }
-
-            private function get_queue_actions() {
-                return $this->scheduled_actions['queue'];
-            }
-
-            private function get_active_actions() {
-                return $this->scheduled_actions['active'];
-            }
-
             private function display() {
-                $queue_actions = $this->get_queue_actions();
-                $active_actions = $this->get_active_actions();
+                $queue_actions = $this->manager->get_queue_actions();
+                $active_actions = $this->manager->get_active_actions();
 
                 if ( $active_actions )
                     $this->display_active_actions();
@@ -66,8 +54,8 @@
 
             private function display_actions_table() {
                 $all_actions = array();
-                $queue_actions = $this->get_queue_actions();
-                $active_actions = $this->get_active_actions();
+                $queue_actions = $this->manager->get_queue_actions();
+                $active_actions = $this->manager->get_active_actions();
 
                 foreach ( $queue_actions as $timestamp => $action )
                     $all_actions[$timestamp] = $action;

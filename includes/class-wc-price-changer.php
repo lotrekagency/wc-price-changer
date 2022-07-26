@@ -17,7 +17,8 @@
             public function __construct() {
                 $this->load_dependencies();
                 $this->load_hooks();
-                $this->manager = new WCPC_Manager();
+                $this->manager = WCPC_Manager::get_instance();
+                session_start();
             }
 
             public function load_dependencies() {
@@ -49,7 +50,7 @@
                     'manage_options',
                     'price-changer',
                     array( $this, 'setup_admin_page' )
-                  );
+                );
             }
 
             public function setup_admin_page() {
