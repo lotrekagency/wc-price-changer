@@ -93,6 +93,7 @@
                                 <td>' . $date->format( 'd/m/Y' ) . '</td>
                                 <td>' . $date->format( 'H:i:s' ) . '</td>
                                 <td>' . implode( ', ', $data['products']) . '</td>
+                                <td>' . $this->get_remove_action_button( $data['id'] ) . '</td>
                             </tr>
                         ';
                     }
@@ -107,6 +108,7 @@
                                     <th>Date</th>
                                     <th>Hour</th>
                                     <th>Products</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>'
@@ -116,6 +118,17 @@
                     </div>
                 ';
                 return $table_html;
+            }
+
+            private function get_remove_action_button( $id ) {
+                $query_args = array(
+                    'page'      => 'price-changer',
+                    'action'    => 'wcpc-remove-scheduled-event',
+                    'event_id'  => rawurlencode( $id )
+                );
+                $link = add_query_arg( $query_args, admin_url( 'admin.php' ) );
+                $link = wp_nonce_url( $link, "wcpc-remove-scheduled-event_{$query_args['action']}_{$id}" );
+                return '<a href="' . esc_url( $link ) . '" >Remove</a>';
             }
 
         }

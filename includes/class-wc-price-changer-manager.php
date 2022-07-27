@@ -31,7 +31,7 @@
 
             public static function get_products( $type = 'products', $category, $search_term ) {
                 $args = array( 'status' => 'publish', 'limit' => -1 );
-                
+
                 if ( $category ) {
                     $args['tax_query'] = array(
                         array(
@@ -182,6 +182,7 @@
             }
 
             public static function create_schedule( $args ) {
+                $args['id'] = md5( rand() ); 
                 wp_schedule_single_event( $args['datetime_start'], 'wcpc_apply_price_change', $args );
                 wp_schedule_single_event( $args['datetime_end'], 'wcpc_remove_price_change', $args );
             }
@@ -222,6 +223,47 @@
                     }
                 }
                 return $products_ids;
+            }
+
+            public function delete_scheduled_actions( $id ) {
+                global $wpdb;
+                $actions = $this->get_scheduled_actions_by_id( $id );
+                $success = TRUE;
+                $wpdb->query( 'START TRANSACTION' );
+
+                foreach ( $actions as $timestamp => $timestamp_actions ) {
+                    foreach ( $timestamp_actions as $hook => $job )
+                        $success = wp_unschedule_event( $timestamp, $hook, reset( $job )['args'] );
+                }
+
+                if ( ! $success )
+                    $wpdb->query( 'ROLLBACK' );
+                else
+                    $wpdb->query( 'COMMIT' );
+
+                return $success;
+            }
+
+            private function get_scheduled_actions_by_id ( $id ) {
+                $retrieved_actions = array();
+
+                foreach ( $this->get_queue_actions() as $timestamp => $queue_jobs ) {
+                    foreach ( $queue_jobs as $action => $job ) {
+                        $job_id = reset( $job )['args']['id'];
+                        if ( $job_id == $id )
+                            $retrieved_actions[$timestamp][$action] = $job;
+                    }
+                }
+
+                foreach ( $this->get_active_actions() as $timestamp => $queue_jobs ) {
+                    foreach ( $queue_jobs as $action => $job ) {
+                        $job_id = reset( $job )['args']['id'];
+                        if ( $job_id == $id )
+                            $retrieved_actions[$timestamp][$action] = $job;
+                    }
+                }
+
+                return $retrieved_actions;
             }
 
         }

@@ -16,8 +16,8 @@
 
             public function __construct() {
                 $this->load_dependencies();
-                $this->load_hooks();
                 $this->manager = WCPC_Manager::get_instance();
+                $this->load_hooks();
                 $this->load_session();
             }
 
@@ -31,6 +31,7 @@
             public function load_hooks() {
                 add_action( 'admin_menu', array( $this, 'define_menu' ) );
                 add_action( 'admin_enqueue_scripts', array( $this, 'add_scripts' ) );
+                add_action( 'init', array( $this, 'check_for_admin_actions' ) );
             }
 
             public function add_scripts() {
@@ -40,7 +41,7 @@
 
             public function load_session() {
                 session_start();
-                
+
                 if ( isset( $_POST['wcpc-viewing'] ) )
                     $_SESSION['wcpc-viewing'] = $_POST['wcpc-viewing'];
                 if ( !isset( $_SESSION['wcpc-viewing'] ) )
@@ -83,6 +84,21 @@
                     $this->action_interface = new WCPC_Action_Interface();
                 }
             }
+
+            public function check_for_admin_actions() {
+                if ( isset( $_GET['action'] ) && $_GET['action'] == 'wcpc-remove-scheduled-event' ) {
+                    $action = wp_unslash( $_GET['action'] );
+                    $event_id = wp_unslash( $_GET['event_id'] );
+                    check_admin_referer( "wcpc-remove-scheduled-event_{$action}_{$event_id}" );
+                    
+                    $this->manager->delete_scheduled_actions( $_GET['event_id'] );
+                    $redirect = array(
+                        'page'  => 'price-changer'
+                    );
+                    wp_safe_redirect( add_query_arg( $redirect, admin_url( 'admin.php' ) ) );
+                }
+            }
+
         }
     }
 ?>
