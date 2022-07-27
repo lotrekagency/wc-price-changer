@@ -74,6 +74,8 @@
             switch( $column_name ) {
                 case 'name':
                     return ( $this->viewing_mode == 'variations' and !$item->is_type( 'variation' ) ) ? ( '<strong>' . $item->get_name() . '</strong>' ) : $item->get_name();
+                case 'attributes':
+                    return wc_get_formatted_variation( $item, true );
                 case 'category':
                     return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
                 case 'price':
@@ -88,6 +90,16 @@
         }
 
         public function get_columns() {
+            if ( $this->viewing_mode == 'variations' )
+                return array(
+                    'cb'            => '<input type="checkbox"/>',
+                    'name'          => __( 'Name', 'wc-price-changer' ),
+                    'attributes'    => __( 'Attributes', 'wc-price-changer' ),
+                    'category'      => __( 'Category', 'wc-price-changer' ),
+                    'price'         => __( 'Price', 'wc-price-changer' ),
+                    'sale_price'    => __( 'Sale price', 'wc-price-changer' ),
+                    'id'            => __( 'ID', 'wc-price-changer' ),
+                );
             return array(
                 'cb'            => '<input type="checkbox"/>',
                 'name'          => __( 'Name', 'wc-price-changer' ),
