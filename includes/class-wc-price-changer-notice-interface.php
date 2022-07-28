@@ -23,6 +23,8 @@
             }
 
             private function display() {
+                $this->display_action_handling_responses();
+
                 $queue_actions = $this->manager->get_queue_actions();
                 $active_actions = $this->manager->get_active_actions();
 
@@ -30,6 +32,14 @@
                     $this->display_active_actions();
                 elseif ( $queue_actions )
                     $this->display_queue_actions();
+            }
+
+            private function display_action_handling_responses() {
+                if ( isset( $_GET['action_delete_success'] ) && $_GET['action_delete_success'] )
+                    $this->display_delete_success();
+
+                if ( isset( $_GET['action_delete_error'] ) && $_GET['action_delete_error'] )
+                    $this->display_delete_error();
             }
 
             private function display_queue_actions() {
@@ -48,6 +58,22 @@
                         <p>There are active price change actions.</p>
                         ' . $this->display_actions_table() . '
                         <a id="link-activities" name="view-activities" onclick="startAnimation()">View all actions</a>
+                    </div>
+                    ';
+            }
+
+            public function display_delete_success() {
+                echo '
+                    <div id="can-view-activities" class="notice notice-success">
+                        <p>Deleted scheduled actions.</p>
+                    </div>
+                    ';
+            }
+
+            public function display_delete_error() {
+                echo '
+                    <div id="can-view-activities" class="notice notice-error">
+                        <p>Cannot delete scheduled actions.</p>
                     </div>
                     ';
             }

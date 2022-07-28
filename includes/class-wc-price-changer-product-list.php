@@ -142,7 +142,7 @@
         }
 
         public function product_category_filter_select() {
-            $html = '<select name="wcpc-category"><option value="">Tutte le categorie</option>';
+            $html = '<select name="wcpc-category"><option value="">All categories</option>';
             foreach ( $this->product_categories as $category ) 
                 $html .= '<option value="' . $category->slug . '"' . ( $this->viewing_category == $category->slug ? ' selected' : '' ) . '>' . $category->name . '</option>';
             $html .= '</select>';

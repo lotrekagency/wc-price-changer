@@ -12,6 +12,7 @@
 
             var $list_table;
             var $action_interface;
+            var $notice_interface;
             var $manager;
 
             public function __construct() {
@@ -86,19 +87,32 @@
             }
 
             public function check_for_admin_actions() {
+                add_filter( 'removable_query_args', 'remove_query_args' );
+
                 if ( isset( $_GET['action'] ) && $_GET['action'] == 'wcpc-remove-scheduled-event' ) {
                     $action = wp_unslash( $_GET['action'] );
                     $event_id = wp_unslash( $_GET['event_id'] );
                     check_admin_referer( "wcpc-remove-scheduled-event_{$action}_{$event_id}" );
                     
-                    $this->manager->delete_scheduled_actions( $_GET['event_id'] );
+                    $success = $this->manager->delete_scheduled_actions( $_GET['event_id'] );
                     $redirect = array(
-                        'page'  => 'price-changer'
+                        'page'                  => 'price-changer',
                     );
+                    if ( $success )
+                        $redirect['action_delete_success'] = TRUE;
+                    else
+                        $redirect['action_delete_error'] = TRUE;
+
                     wp_safe_redirect( add_query_arg( $redirect, admin_url( 'admin.php' ) ) );
+                    exit;
                 }
             }
 
         }
     }
+
+    function remove_query_args( $query_args ) {
+        return array( 'action_delete_success', 'action_delete_error' );
+    }
+
 ?>
