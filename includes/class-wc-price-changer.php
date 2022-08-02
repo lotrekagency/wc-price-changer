@@ -70,9 +70,9 @@
             public function setup_admin_page() {
                 echo '<div class="wrap">';
                 echo '<h1>WC Price Changer</h1>';
-                $this->display_notices();
                 $this->display_action();
-                $this->list_table = new WCPC_Product_List();
+                $this->display_notices();
+                $this->display_table();
                 echo '</div>';
             }
 
@@ -84,6 +84,10 @@
                 if ( $this->is_action_selected() ) {
                     $this->action_interface = new WCPC_Action_Interface();
                 }
+            }
+
+            public function display_table() {
+                $this->list_table = new WCPC_Product_List();
             }
 
             public function check_for_admin_actions() {

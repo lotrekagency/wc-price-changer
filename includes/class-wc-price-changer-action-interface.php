@@ -63,7 +63,7 @@
                                 return $product->get_id();
                             }, $scheduled_products );
 
-                        WCPC_Manager::create_schedule( $args );
+                        $this->manager->create_schedule( $args );
                     }
                 }
             }

@@ -181,13 +181,12 @@
                 return $final_price >= 0 ? $final_price : 0;
             }
 
-            public static function create_schedule( $args ) {
+            public function create_schedule( $args ) {
                 $args['id'] = md5( rand() ); 
                 wp_schedule_single_event( $args['datetime_start'], 'wcpc_apply_price_change', $args );
                 wp_schedule_single_event( $args['datetime_end'], 'wcpc_remove_price_change', $args );
+                $this->scheduled_actions = $this->get_scheduled_actions();
             }
-
-            public static function remove_schedule() {}
 
             public function get_scheduled_actions() {
                 $jobs = get_option( 'cron' );
