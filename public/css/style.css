@@ -19,9 +19,22 @@
 }
 
 .scrollable-container {
-  overflow: scroll;
+  overflow-y: scroll;
 }
 
-.table-products{
+.table-products {
   height: 100%;
+}
+
+.flex-box-container {
+  display: flex;
+}
+
+.actions-box {
+  width: 50%;
+}
+
+.products-box {
+  flex-grow: 100;
+  margin-left: 10px;
 }

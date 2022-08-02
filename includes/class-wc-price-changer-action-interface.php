@@ -83,44 +83,25 @@
             public function display() {
                 if ( $this->is_price_change_applied() )
                     return;
-                
+
                 $display_html = '
                     <div id="poststuff">
-                        <div id="post-body" class="metabox-holder columns-2">
-                            <div id="post-body-content" class="interface-card">
-                                <div class="meta-box-sortables ui-sortable">
-                                    <div class="postbox interface-card">
-                                        <div class="inside">
-                                            ' . $this->display_form() . '
-                                        </div>
-                                    </div>
+                        <div class="flex-box-container">';
+
+                $display_html .= '
+                            <div class="postbox interface-card actions-box">
+                                <div class="inside">
+                                    ' . $this->display_form() . '
                                 </div>
                             </div>';
-                
-                if ( ! $this->is_preview_mode() ) 
-                    $display_html .= '
-                            <div id="postbox-container-1" class="postbox-container">
-                                <div class="meta-box-sortables">
-                                    <div class="postbox interface-card scrollable-container">
-                                        <div class="inside">
-                                            ' . $this->display_products() . '
-                                        </div>
-                                    </div>
+                 
+                $display_html .= '
+                            <div class="postbox interface-card products-box scrollable-container">
+                                <div class="inside">
+                                    ' . $this->display_products_table() . '
                                 </div>
                             </div>';
-                
-                if ( $this->is_preview_mode() ) 
-                    $display_html .= '
-                            <div id="postbox-container-1" class="postbox-container">
-                                <div class="meta-box-sortables">
-                                    <div class="postbox interface-card scrollable-container">
-                                        <div class="inside">
-                                            ' . $this->display_preview() . '
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>';
-                
+
                 $display_html .= '
                         </div>
                         <br class="clear">
@@ -223,6 +204,12 @@
                 return $form_html;
             }
 
+            private function display_products_table() {
+                if ( $this->is_preview_mode() )
+                    return $this->display_preview();
+                return $this->display_products();
+            }
+
 
             private function display_products() {
                 $products = $this->products;
@@ -237,12 +224,14 @@
                         <table class="widefat">
                             <tbody>
                                 <tr class="alternate">
-                                    <th>Product</th>
-                                    <th>Price</th>
+                                    <th><strong>ID</strong></th>
+                                    <th><strong>Product</strong></th>
+                                    <th><strong>Price</strong></th>
                                 </tr>';
                 foreach ( $products as $product ) {
                     $table_html .= '
                         <tr>
+                            <th>' . $product->get_id() . '</th>
                             <th>' . $product->get_name() . '</th>
                             <th>' . wc_price( $product->get_regular_price() ) . '</th>
                         </tr>';
@@ -266,13 +255,15 @@
                         <table class="widefat">
                             <tbody>
                                 <tr class="alternate">
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Price change (' . ( $this->operation == 'dec' ? '↓' : '↑' ) . ')</th>
+                                    <th><strong>ID</strong></th>
+                                    <th><strong>Product</strong></th>
+                                    <th><strong>Price</strong></th>
+                                    <th><strong>Price change (' . ( $this->operation == 'dec' ? '↓' : '↑' ) . ')</strong></th>
                                 </tr>';
                 foreach ( $products as $product ) {
                     $table_html .= '
                         <tr>
+                            <th>' . $product->get_id() . '</th>
                             <th>' . $product->get_name() . '</th>
                             <th>' . wc_price( $product->get_regular_price() ) . '</th>
                             <th>' . wc_price( WCPC_Manager::calculate_price( $product, $this->mode, $this->operation, $this->change_value ) ) . '</th>
