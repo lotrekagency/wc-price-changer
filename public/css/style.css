@@ -38,3 +38,7 @@
   flex-grow: 100;
   margin-left: 10px;
 }
+
+.action-buttons input {
+  margin-left: 5px !important;
+}

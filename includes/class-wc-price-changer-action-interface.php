@@ -199,7 +199,7 @@
                 }
                 
                 $form_html .= '</table>';
-                $form_html .= '<p class="submit">' . get_submit_button( 'Preview', 'secondary', 'preview', false ) . get_submit_button( 'Apply', 'primary', 'submit', false ) . '</p>';
+                $form_html .= '<div class="action-buttons">' . get_submit_button( 'Preview', 'secondary', 'preview', false ) . get_submit_button( 'Apply', 'primary', 'submit', false ) . '</div>';
                 $form_html .= '</form>';
                 return $form_html;
             }
