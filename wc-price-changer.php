@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       WC Price Changer
  * Description:       Manage your products prices smartly.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
@@ -38,6 +38,14 @@ function setup_menu(){
       'price-changer',
       'setup_page'
     );
+    add_submenu_page(
+      'woocommerce',
+      'Gestione Cron',
+      'WC Cron Manager',
+      'manage_options',
+      'price-changer-cron',
+      'setup_cron_manager_page'
+    );
     if(isset($_POST['submit']))
     {
       $products = $_SESSION['products'];
@@ -63,7 +71,7 @@ function setup_menu(){
           add_action( 'admin_notices', 'action_notice_schedule_change' );
         }
         else{
-          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type']);
+          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type'], isset($_POST['enable_translations']));
           add_action( 'admin_notices', 'action_notice_direct_change' );
         }
       } else {
@@ -357,12 +365,22 @@ class ProductList extends WP_List_Table {
 
   function check_cron_jobs() {
     $jobs = get_option( 'cron' );
-    foreach($jobs as $job){
+    $now = time();
+    foreach($jobs as $timestamp => $job){
+      $is_past = $timestamp <= $now;
+
       if ( is_array($job) and array_key_exists( 'action_change_prices', $job) ){
-        array_push($this->queue_jobs, $job['action_change_prices']);
+        // Se l'evento è nel passato, è ATTIVO (cambio già applicato)
+        // Se è nel futuro, è IN CODA (cambio da applicare)
+        if ($is_past) {
+          array_push($this->active_jobs, $job['action_change_prices']);
+        } else {
+          array_push($this->queue_jobs, $job['action_change_prices']);
+        }
       }
       if ( is_array($job) and array_key_exists( 'action_remove_prices', $job) ){
-        array_push($this->active_jobs, $job['action_remove_prices']);
+        // Gli eventi remove_prices non vengono mostrati con bordi colorati
+        // perché rappresentano la fine di uno sconto già gestito
       }
     }
   }
@@ -556,7 +574,7 @@ function set_prices($product, $new_price, $choice, $enable_translations){
   if ($enable_translations) {
     $wpml_trid = apply_filters( 'wpml_element_trid', '', $product->get_id());
     $wpml_product_translations = apply_filters( 'wpml_get_element_translations', '', $wpml_trid);
-    
+
     if ( $choice == 'inc' ){
       foreach( $wpml_product_translations as $translation) {
         $product_translation = wc_get_product($translation->element_id);
@@ -626,7 +644,7 @@ function remove_prices($ids, $choice, $value, $operation, $enable_translations){
     foreach ( $ids as $product ){
       $product_retrieved = wc_get_product($product);
       $product_retrieved_price = (float)$product_retrieved->get_regular_price();
-  
+
       if ( $choice == 'inc' ){
         if ( $operation == 'percentage' ){
           $product_retrieved->set_price(sprintf("%.2f",  ( $product_retrieved_price / ( 1 + ( $value / 100 ) ) ) ) );
@@ -786,5 +804,269 @@ function check_active_jobs($active_jobs, $queue_jobs) {
 function add_scripts(){
   wp_enqueue_style( 'wc-price-changer-style', plugin_dir_url( __FILE__  ) . 'scripts/style.css');
   wp_enqueue_script( 'wc-price-changer-script', plugin_dir_url( __FILE__  ) . 'scripts/script.js');
+}
+
+function setup_cron_manager_page(){
+  // Gestione esecuzione manuale cron
+  if(isset($_POST['run_due_crons'])){
+    $executed = 0;
+    $crons = _get_cron_array();
+    $now = time();
+
+    foreach($crons as $timestamp => $hooks){
+      if($timestamp <= $now){
+        foreach($hooks as $hook => $events){
+          if($hook === 'action_change_prices' || $hook === 'action_remove_prices'){
+            foreach($events as $event){
+              // Esegui l'azione
+              do_action_ref_array($hook, $event['args']);
+              $executed++;
+            }
+          }
+        }
+      }
+    }
+
+    // Rimuovi gli eventi eseguiti
+    if($executed > 0){
+      foreach($crons as $timestamp => $hooks){
+        if($timestamp <= $now){
+          foreach($hooks as $hook => $events){
+            if($hook === 'action_change_prices' || $hook === 'action_remove_prices'){
+              unset($crons[$timestamp][$hook]);
+              if(empty($crons[$timestamp])){
+                unset($crons[$timestamp]);
+              }
+            }
+          }
+        }
+      }
+      _set_cron_array($crons);
+      echo '<div class="notice notice-success is-dismissible"><p>Eseguiti ' . $executed . ' eventi scaduti.</p></div>';
+    } else {
+      echo '<div class="notice notice-info is-dismissible"><p>Nessun evento scaduto da eseguire.</p></div>';
+    }
+  }
+
+  // Gestione azioni
+  if(isset($_POST['delete_event'])){
+    $timestamp = intval($_POST['timestamp']);
+    $hook = sanitize_text_field($_POST['hook']);
+    $crons = _get_cron_array();
+    if(isset($crons[$timestamp][$hook])){
+      unset($crons[$timestamp][$hook]);
+      if(empty($crons[$timestamp])){
+        unset($crons[$timestamp]);
+      }
+      _set_cron_array($crons);
+      echo '<div class="notice notice-success is-dismissible"><p>Evento eliminato con successo.</p></div>';
+    }
+  }
+
+  if(isset($_POST['clear_all_events'])){
+    $crons = _get_cron_array();
+    $cleared = 0;
+    foreach($crons as $timestamp => $hooks){
+      foreach($hooks as $hook => $events){
+        if($hook === 'action_change_prices' || $hook === 'action_remove_prices'){
+          unset($crons[$timestamp][$hook]);
+          $cleared++;
+          if(empty($crons[$timestamp])){
+            unset($crons[$timestamp]);
+          }
+        }
+      }
+    }
+    _set_cron_array($crons);
+    echo '<div class="notice notice-success is-dismissible"><p>Eliminati ' . $cleared . ' eventi del plugin.</p></div>';
+  }
+
+  // Recupera eventi cron
+  $crons = _get_cron_array();
+  $plugin_events = array();
+
+  foreach($crons as $timestamp => $hooks){
+    foreach($hooks as $hook => $events){
+      if($hook === 'action_change_prices' || $hook === 'action_remove_prices'){
+        foreach($events as $key => $event){
+          $plugin_events[] = array(
+            'timestamp' => $timestamp,
+            'hook' => $hook,
+            'args' => $event['args'],
+            'key' => $key
+          );
+        }
+      }
+    }
+  }
+
+  // Ordina per timestamp
+  usort($plugin_events, function($a, $b){
+    return $a['timestamp'] - $b['timestamp'];
+  });
+
+  // Filtra eventi in base alla visualizzazione
+  $show_all = isset($_GET['show_all']) && $_GET['show_all'] === '1';
+  $now_filter = time();
+  $filtered_events = $plugin_events;
+
+  if (!$show_all) {
+    // Nascondi eventi "action_remove_prices" passati (SCADUTI)
+    $filtered_events = array_filter($plugin_events, function($event) use ($now_filter) {
+      $is_past = $event['timestamp'] <= $now_filter;
+      $is_remove = $event['hook'] === 'action_remove_prices';
+      // Nascondi solo i "remove_prices" passati (eventi di fine già eseguiti)
+      return !($is_past && $is_remove);
+    });
+  }
+
+  $total_events = count($plugin_events);
+  $shown_events = count($filtered_events);
+
+  ?>
+  <div class="wrap">
+    <h1>WC Price Changer - Gestione Cron</h1>
+
+    <?php if($total_events > 0): ?>
+      <div class="tablenav top">
+        <form method="post" style="display: inline;">
+          <?php wp_nonce_field('run_due_crons', 'run_crons_nonce'); ?>
+          <input type="hidden" name="run_due_crons" value="1">
+          <input type="submit" class="button button-primary" value="▶️ Esegui eventi scaduti"
+                 style="margin-right: 10px;">
+        </form>
+        <form method="post" style="display: inline;">
+          <?php wp_nonce_field('clear_all_cron', 'clear_all_nonce'); ?>
+          <input type="hidden" name="clear_all_events" value="1">
+          <input type="submit" class="button button-secondary" value="🗑️ Pulisci tutti gli eventi"
+                 onclick="return confirm('Sei sicuro di voler eliminare tutti gli eventi schedulati del plugin?');">
+        </form>
+        <span style="margin-left: 20px; color: #666;">
+          Totale eventi: <strong><?php echo $total_events; ?></strong>
+          <?php if (!$show_all && $shown_events < $total_events): ?>
+            (<?php echo $shown_events; ?> visualizzati,
+            <a href="?page=price-changer-cron&show_all=1">mostra tutti</a>)
+          <?php endif; ?>
+          <?php if ($show_all): ?>
+            (<a href="?page=price-changer-cron">nascondi completati</a>)
+          <?php endif; ?>
+        </span>
+      </div>
+
+      <table class="wp-list-table widefat fixed striped">
+        <thead>
+          <tr>
+            <th style="width: 100px;">Stato</th>
+            <th style="width: 120px;">Tipo Evento</th>
+            <th style="width: 150px;">Data e Ora</th>
+            <th style="width: 120px;">Operazione</th>
+            <th style="width: 100px;">Valore</th>
+            <th>Prodotti (IDs)</th>
+            <th style="width: 100px;">Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $now = time(); // Usa UTC per confrontare con i timestamp cron
+          foreach($filtered_events as $event):
+            $date = new DateTime();
+            $date->setTimestamp($event['timestamp']);
+            $date->setTimezone(new DateTimeZone('Europe/Berlin'));
+
+            $is_past = $event['timestamp'] <= $now;
+            $is_start = $event['hook'] === 'action_change_prices';
+
+            // Determina lo stato e il colore
+            if($is_past && $is_start){
+              $status = 'ATTIVO';
+              $status_color = '#ffb900';
+              $row_style = 'background-color: #fff8e5;';
+            } elseif(!$is_past && $is_start){
+              $status = 'IN CODA';
+              $status_color = '#46b450';
+              $row_style = 'background-color: #ecf7ed;';
+            } elseif($is_past && !$is_start){
+              $status = 'SCADUTO';
+              $status_color = '#dc3232';
+              $row_style = 'background-color: #f9e9e9;';
+            } else {
+              $status = 'PROGRAMMATO';
+              $status_color = '#00a0d2';
+              $row_style = 'background-color: #e5f5fa;';
+            }
+
+            $event_type = $is_start ? 'Inizio cambio' : 'Fine cambio';
+            $operation_type = isset($event['args'][1]) && $event['args'][1] === 'inc' ? 'Incremento' : 'Decremento';
+            $value_type = isset($event['args'][3]) && $event['args'][3] === 'percentage' ? '%' : '€';
+            $value = isset($event['args'][2]) ? $event['args'][2] . ' ' . $value_type : 'N/A';
+            $products = isset($event['args'][0]) ? implode(', ', array_slice($event['args'][0], 0, 10)) : 'N/A';
+            if(isset($event['args'][0]) && count($event['args'][0]) > 10){
+              $products .= ' ... (+' . (count($event['args'][0]) - 10) . ' altri)';
+            }
+          ?>
+          <tr style="<?php echo $row_style; ?>">
+            <td>
+              <strong style="color: <?php echo $status_color; ?>;">
+                <?php echo $status; ?>
+              </strong>
+            </td>
+            <td><?php echo $event_type; ?></td>
+            <td>
+              <?php echo $date->format('d/m/Y H:i:s'); ?>
+              <?php if($is_past): ?>
+                <br><small style="color: #666;">(<?php echo human_time_diff($event['timestamp'], $now); ?> fa)</small>
+              <?php else: ?>
+                <br><small style="color: #666;">(tra <?php echo human_time_diff($now, $event['timestamp']); ?>)</small>
+              <?php endif; ?>
+            </td>
+            <td><?php echo $operation_type; ?></td>
+            <td><?php echo $value; ?></td>
+            <td><small><?php echo $products; ?></small></td>
+            <td>
+              <form method="post" style="margin: 0;">
+                <?php wp_nonce_field('delete_cron_event', 'delete_nonce'); ?>
+                <input type="hidden" name="timestamp" value="<?php echo $event['timestamp']; ?>">
+                <input type="hidden" name="hook" value="<?php echo $event['hook']; ?>">
+                <input type="hidden" name="delete_event" value="1">
+                <button type="submit" class="button button-small button-link-delete"
+                        onclick="return confirm('Eliminare questo evento?');">
+                  Elimina
+                </button>
+              </form>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+
+      <div class="tablenav bottom">
+        <div class="alignleft actions">
+          <span style="color: #666;">
+            Legenda:
+            <span style="color: #46b450;">●</span> In coda (futuro) |
+            <span style="color: #ffb900;">●</span> Attivo (passato, cambio applicato) |
+            <span style="color: #00a0d2;">●</span> Fine programmata |
+            <span style="color: #dc3232;">●</span> Fine scaduta
+          </span>
+        </div>
+      </div>
+
+    <?php else: ?>
+      <div class="notice notice-info">
+        <p>Non ci sono eventi schedulati per il plugin WC Price Changer.</p>
+      </div>
+    <?php endif; ?>
+
+  </div>
+
+  <style>
+  .wp-list-table th {
+    font-weight: 600;
+  }
+  .wp-list-table td {
+    vertical-align: middle;
+  }
+  </style>
+  <?php
 }
 ?>
