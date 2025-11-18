@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       WC Price Changer
  * Description:       Manage your products prices smartly.
- * Version:           1.2.1
+ * Version:           1.2.2
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
@@ -11,7 +11,7 @@
 init_plugin();
 
 function init_plugin(){
-  session_start();
+  // Rimosso session_start() - usiamo WordPress Options API
   add_action('admin_enqueue_scripts', 'add_scripts');
   add_action('admin_menu', 'setup_menu');
   add_action('apply_price_changes', 'apply');
@@ -25,11 +25,10 @@ function init_plugin(){
 function setup_menu(){
   if ( class_exists( 'WooCommerce' ) ) {
     if (isset($_POST['viewing'])){
-      $_SESSION['viewing'] = $_POST['viewing'];
+      update_option('wc_price_changer_viewing', sanitize_text_field($_POST['viewing']));
     }
-    if (!isset($_SESSION['viewing'])){
-      $_SESSION['viewing'] = 'products';
-    }
+    $viewing = get_option('wc_price_changer_viewing', 'products');
+    
     add_submenu_page(
       'woocommerce',
       'Price Changer',
@@ -48,7 +47,7 @@ function setup_menu(){
     );
     if(isset($_POST['submit']))
     {
-      $products = $_SESSION['products'];
+      $products = get_option('wc_price_changer_products', array());
       if ( isset($_POST['only-variations']) ){
         $variations = array();
         foreach($products as $product){
@@ -60,7 +59,7 @@ function setup_menu(){
         $products = $variations;
       }
       if ( $products ) {
-        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], $_SESSION['submit-type'], isset($_POST['enable_translations']));
+        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], get_option('wc_price_changer_submit_type', ''), isset($_POST['enable_translations']));
         if($_POST['datetime-start']){
           $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone('Europe/Berlin'));
           wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
@@ -71,7 +70,7 @@ function setup_menu(){
           add_action( 'admin_notices', 'action_notice_schedule_change' );
         }
         else{
-          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], $_SESSION['submit-type'], isset($_POST['enable_translations']));
+          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], get_option('wc_price_changer_submit_type', ''), isset($_POST['enable_translations']));
           add_action( 'admin_notices', 'action_notice_direct_change' );
         }
       } else {
@@ -98,7 +97,8 @@ class ProductList extends WP_List_Table {
       $selected_categories = $_POST['categories'];
     }
     $this->products = wc_get_products(array('status' => 'publish', 'category' => $selected_categories, 'limit' => -1));
-    if($_SESSION['viewing'] == 'variations'){
+    $viewing = get_option('wc_price_changer_viewing', 'products');
+    if($viewing == 'variations'){
       $variations = array();
       foreach($this->products as $product){
         array_push($variations, $product);
@@ -150,9 +150,10 @@ class ProductList extends WP_List_Table {
   }
 
   function column_default( $item, $column_name ) {
+    $viewing = get_option('wc_price_changer_viewing', 'products');
     switch( $column_name ) {
       case 'name':
-        return (($_SESSION['viewing'] == 'variations' and !$item->is_type('variation')) ? ('<strong>' . $item->get_name() . '</strong>') : $item->get_name());
+        return (($viewing == 'variations' and !$item->is_type('variation')) ? ('<strong>' . $item->get_name() . '</strong>') : $item->get_name());
       case 'category':
         return implode( wp_get_post_terms( $item->get_id(), 'product_cat', ['fields' => 'names'] ) );
       case 'price':
@@ -266,12 +267,13 @@ class ProductList extends WP_List_Table {
   protected function extra_tablenav( $which ) {
     $move_on_url = '&cat-filter=';
     if ( $which == "top" ){
+      $viewing = get_option('wc_price_changer_viewing', 'products');
       ?>
       <div class="alignright actions bulkactions">
       <?php
       echo '<select name="viewing">\n';
-      echo '<option value="products" ' . (($_SESSION['viewing'] == 'products') ? 'selected' : '') .'>Solo prodotti</option>';
-      echo "\t" . '<option value="variations" ' . (($_SESSION['viewing'] == 'variations') ? 'selected' : '') . '>Prodotti e variazioni</option>\n';
+      echo '<option value="products" ' . (($viewing == 'products') ? 'selected' : '') .'>Solo prodotti</option>';
+      echo "\t" . '<option value="variations" ' . (($viewing == 'variations') ? 'selected' : '') . '>Prodotti e variazioni</option>\n';
       echo "</select>\n";
       $categories = get_terms( ['taxonomy' => 'product_cat'] );
       echo '<select name="categories">\n';
@@ -345,14 +347,14 @@ class ProductList extends WP_List_Table {
   function process_bulk_action() {
     $action = $this->current_action();
     if ( isset( $_POST['products'] ) ) {
-      $_SESSION['products'] = $_POST['products'];
+      update_option('wc_price_changer_products', array_map('intval', $_POST['products']));
       switch ( $action ) {
         case 'price-change-unit':
-          $_SESSION['submit-type'] = 'unit';
+          update_option('wc_price_changer_submit_type', 'unit');
           setup_price_changer('unit');
           break;
         case 'price-change-percentage':
-          $_SESSION['submit-type'] = 'percentage';
+          update_option('wc_price_changer_submit_type', 'percentage');
           setup_price_changer('percentage');
           break;
         default:
@@ -415,7 +417,7 @@ function setup_page(){
   check_active_jobs($myListTable->active_jobs, $myListTable->queue_jobs);
   $myListTable->prepare_items();
   if(isset($_POST['preview'])){
-    setup_price_changer($_SESSION['submit-type']);
+    setup_price_changer(get_option('wc_price_changer_submit_type', ''));
   }
   echo '<form method="post">';
   $myListTable->display();
@@ -491,7 +493,8 @@ function setup_price_changer($type){
       </tr>
 
       <?php
-        if($_SESSION['viewing'] == 'variations'){
+        $viewing = get_option('wc_price_changer_viewing', 'products');
+        if($viewing == 'variations'){
           echo '<tr><td><br></td></tr>';
           echo '<tr><td>';
           echo '<input type="checkbox" name="only-variations" ' . (isset($_POST['only-variations']) ? 'checked' : '') . '>';
@@ -523,7 +526,7 @@ function setup_price_changer($type){
           </thead>
           <tbody style="overflow-y: scroll">
           <?php
-            $products = $_SESSION['products'];
+            $products = get_option('wc_price_changer_products', array());
             $table_products = array();
             if ( isset($_POST['only-variations']) ) {
               foreach ( $products as $product) {
@@ -544,7 +547,7 @@ function setup_price_changer($type){
                 echo '<td>' . $product_retrieved->get_name() . '</td>';
                 echo '<td>' . $product_retrieved->get_regular_price() . '</td>';
                 if(isset($_POST['preview'])){
-                  echo '<td>' . calculate_final_price((float)$product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], $_SESSION['submit-type']) . '</td>';
+                  echo '<td>' . calculate_final_price((float)$product_retrieved->get_regular_price(), $_POST['choice'], $_POST['value'], get_option('wc_price_changer_submit_type', '')) . '</td>';
                 }
                 echo '</tr>';
               }
