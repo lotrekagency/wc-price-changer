@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       WC Price Changer
  * Description:       Manage your products prices smartly.
- * Version:           1.2.0
+ * Version:           1.2.1
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
@@ -700,13 +700,14 @@ function action_notice_schedule_change() {
 function construct_queue_table() {
   ?>
   <div id="div-table-jobs" class="div-table-jobs-hidden">
-      <table class="table-jobs">
-        <thead style="text-align: left">
-          <tr style="background-color: #e6e6e6">
-            <th style='padding-left: 10px'>Evento</th>
-            <th>Data</th>
-            <th>Ora</th>
-            <th>Prodotti</th>
+      <table class="table-jobs wc-events-table">
+        <thead>
+          <tr>
+            <th style='padding-left: 10px; width: 10%;'>Tipo</th>
+            <th style='width: 35%;'>Evento</th>
+            <th style='width: 15%;'>Data</th>
+            <th style='width: 10%;'>Ora</th>
+            <th style='width: 30%;'>Prodotti</th>
           </tr>
         </thead>
         <tbody>
@@ -744,16 +745,27 @@ function construct_queue_table() {
               $value = 'del ' .  reset($job)['args'][2] . ' %';
             }
             $type = '';
+            $type_icon = '';
             if (reset($job)['args'][1] == 'dec' ) {
               $type = 'dello sconto ';
+              $type_icon = '<span class="dashicons dashicons-arrow-down-alt" style="color: #d63638; font-size: 16px; vertical-align: middle;"></span>';
             } else {
               $type = "dell' aumento ";
+              $type_icon = '<span class="dashicons dashicons-arrow-up-alt" style="color: #00a32a; font-size: 16px; vertical-align: middle;"></span>';
             }
-            echo '<tr style="' . $style . '">';
-            echo "<td style='padding-left: 10px'>" . $text . $type . $value . "</td>";
-            echo '<td>' . $date->format('d/m/Y') . '</td>';
-            echo '<td>' . $date->format('H:i:s') . '</td>';
-            echo '<td>' . implode(', ', reset($job)['args'][0]) . '</td>';
+            $event_badge_color = $action == 'action_change_prices' ? '#46b450' : '#f0b849';
+            echo '<tr>';
+            echo "<td style='padding-left: 10px;'>";
+            echo "<span class='event-badge' style='background: " . $event_badge_color . "; color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; display: inline-block;'>" . strtoupper($text) . "</span>";
+            echo "</td>";
+            echo "<td>";
+            echo $type_icon . " " . $text . $type . " <strong>" . $value . "</strong>";
+            echo "</td>";
+            echo '<td><strong>' . $date->format('d/m/Y') . '</strong></td>';
+            echo '<td><strong>' . $date->format('H:i') . '</strong></td>';
+            $products_list = reset($job)['args'][0];
+            $products_count = count($products_list);
+            echo '<td><span class="dashicons dashicons-products" style="color: #50575e; vertical-align: middle;"></span> <strong>' . $products_count . '</strong> prodott' . ($products_count === 1 ? 'o' : 'i') . ' <small style="color: #646970;">(' . implode(', ', array_slice($products_list, 0, 3)) . ($products_count > 3 ? '...' : '') . ')</small></td>';
             echo '</tr>';
           }
         }
@@ -766,21 +778,49 @@ function construct_queue_table() {
 
 function notice_queue_jobs() {
   ?>
-  <div id="can-view-activities" class="notice notice-success">
-      <p><?php _e( 'Ci sono eventi di cambio prezzi in coda.', '' ); ?></p>
-      <?php construct_queue_table(); ?>
-      <a id="link-activities" name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
+  <div id="can-view-activities" class="notice notice-success wc-price-notice">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+      <span class="dashicons dashicons-clock" style="font-size: 24px; width: 24px; height: 24px; color: #4ab866;"></span>
+      <p style="margin: 0; font-weight: 600;">Ci sono eventi di cambio prezzi in coda.</p>
+    </div>
+    <?php construct_queue_table(); ?>
+    <button type="button" id="link-activities" class="button button-small" onclick="startAnimation()" style="margin-top: 10px;">
+      Visualizza tutte le attività
+    </button>
   </div>
+  <script>
+  function startAnimation(){
+    const notice = document.getElementById('div-table-jobs');
+    notice.classList.toggle('div-table-jobs-active');
+    const element = document.getElementById('link-activities');
+    const isVisible = notice.classList.contains('div-table-jobs-active');
+    element.textContent = isVisible ? 'Nascondi tutte le attività' : 'Visualizza tutte le attività';
+  }
+  </script>
   <?php
 }
 
 function notice_active_jobs() {
   ?>
-  <div class="notice notice-warning">
-      <p><?php _e( 'Ci sono cambi di prezzo attivi.', '' ); ?></p>
-      <?php construct_queue_table(); ?>
-      <a id="link-activities" name="view-activities" onclick="startAnimation()">Visualizza tutte le attività</a>
+  <div class="notice notice-warning wc-price-notice">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+      <span class="dashicons dashicons-warning" style="font-size: 24px; width: 24px; height: 24px; color: #f0b849;"></span>
+      <p style="margin: 0; font-weight: 600;">Ci sono cambi di prezzo attivi.</p>
+    </div>
+    <?php construct_queue_table(); ?>
+    <button type="button" id="link-activities" class="button button-small" onclick="startAnimation()" style="margin-top: 10px;">
+      Visualizza tutte le attività
+    </button>
   </div>
+  <script>
+  function startAnimation(){
+    const notice = document.getElementById('div-table-jobs');
+    notice.classList.toggle('div-table-jobs-active');
+    const element = document.getElementById('link-activities');
+    const isVisible = notice.classList.contains('div-table-jobs-active');
+    element.textContent = isVisible ? 'Nascondi tutte le attività' : 'Visualizza tutte le attività';
+  }
+  </script>
   <?php
 }
 
@@ -802,8 +842,8 @@ function check_active_jobs($active_jobs, $queue_jobs) {
 }
 
 function add_scripts(){
-  wp_enqueue_style( 'wc-price-changer-style', plugin_dir_url( __FILE__  ) . 'scripts/style.css');
-  wp_enqueue_script( 'wc-price-changer-script', plugin_dir_url( __FILE__  ) . 'scripts/script.js');
+  wp_enqueue_style( 'wc-price-changer-style', plugin_dir_url( __FILE__  ) . 'scripts/style.css', array(), '1.2.1');
+  wp_enqueue_script( 'wc-price-changer-script', plugin_dir_url( __FILE__  ) . 'scripts/script.js', array(), '1.2.1', true);
 }
 
 function setup_cron_manager_page(){
@@ -924,36 +964,53 @@ function setup_cron_manager_page(){
   $shown_events = count($filtered_events);
 
   ?>
-  <div class="wrap">
-    <h1>WC Price Changer - Gestione Cron</h1>
+  <div class="wrap wc-price-changer-cron">
+    <h1 class="wp-heading-inline">
+      <span class="dashicons dashicons-clock" style="font-size: 28px; width: 28px; height: 28px;"></span>
+      WC Price Changer - Gestione Cron
+    </h1>
+    <hr class="wp-header-end">
 
     <?php if($total_events > 0): ?>
-      <div class="tablenav top">
-        <form method="post" style="display: inline;">
-          <?php wp_nonce_field('run_due_crons', 'run_crons_nonce'); ?>
-          <input type="hidden" name="run_due_crons" value="1">
-          <input type="submit" class="button button-primary" value="▶️ Esegui eventi scaduti"
-                 style="margin-right: 10px;">
-        </form>
-        <form method="post" style="display: inline;">
-          <?php wp_nonce_field('clear_all_cron', 'clear_all_nonce'); ?>
-          <input type="hidden" name="clear_all_events" value="1">
-          <input type="submit" class="button button-secondary" value="🗑️ Pulisci tutti gli eventi"
-                 onclick="return confirm('Sei sicuro di voler eliminare tutti gli eventi schedulati del plugin?');">
-        </form>
-        <span style="margin-left: 20px; color: #666;">
-          Totale eventi: <strong><?php echo $total_events; ?></strong>
-          <?php if (!$show_all && $shown_events < $total_events): ?>
-            (<?php echo $shown_events; ?> visualizzati,
-            <a href="?page=price-changer-cron&show_all=1">mostra tutti</a>)
-          <?php endif; ?>
-          <?php if ($show_all): ?>
-            (<a href="?page=price-changer-cron">nascondi completati</a>)
-          <?php endif; ?>
-        </span>
+      <div class="tablenav top" style="padding: 15px 0; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <form method="post" style="display: inline;">
+            <?php wp_nonce_field('run_due_crons', 'run_crons_nonce'); ?>
+            <input type="hidden" name="run_due_crons" value="1">
+            <button type="submit" class="button button-primary" style="height: 36px;">
+              <span class="dashicons dashicons-controls-play" style="vertical-align: middle; margin-top: -2px;"></span>
+              Esegui eventi scaduti
+            </button>
+          </form>
+          <form method="post" style="display: inline;">
+            <?php wp_nonce_field('clear_all_cron', 'clear_all_nonce'); ?>
+            <input type="hidden" name="clear_all_events" value="1">
+            <button type="submit" class="button button-secondary" style="height: 36px;"
+                   onclick="return confirm('Sei sicuro di voler eliminare tutti gli eventi schedulati del plugin?');">
+              <span class="dashicons dashicons-trash" style="vertical-align: middle; margin-top: -2px;"></span>
+              Pulisci tutti
+            </button>
+          </form>
+          <div style="flex: 1;"></div>
+          <div class="cron-stats">
+            <span class="cron-stat-badge">
+              <span class="dashicons dashicons-calendar-alt"></span>
+              <strong><?php echo $total_events; ?></strong> eventi totali
+            </span>
+            <?php if (!$show_all && $shown_events < $total_events): ?>
+              <span class="cron-stat-badge">
+                <strong><?php echo $shown_events; ?></strong> visualizzati
+              </span>
+              <a href="?page=price-changer-cron&show_all=1" class="button button-small">Mostra tutti</a>
+            <?php endif; ?>
+            <?php if ($show_all): ?>
+              <a href="?page=price-changer-cron" class="button button-small">Nascondi completati</a>
+            <?php endif; ?>
+          </div>
+        </div>
       </div>
 
-      <table class="wp-list-table widefat fixed striped">
+      <table class="wp-list-table widefat fixed striped wc-cron-table">
         <thead>
           <tr>
             <th style="width: 100px;">Stato</th>
@@ -976,52 +1033,85 @@ function setup_cron_manager_page(){
             $is_past = $event['timestamp'] <= $now;
             $is_start = $event['hook'] === 'action_change_prices';
 
-            // Determina lo stato e il colore
+            // Determina lo stato, icona e colore
             if($is_past && $is_start){
               $status = 'ATTIVO';
-              $status_color = '#ffb900';
-              $row_style = 'background-color: #fff8e5;';
+              $status_icon = 'dashicons-yes-alt';
+              $status_color = '#f0b849';
+              $row_style = '';
             } elseif(!$is_past && $is_start){
               $status = 'IN CODA';
+              $status_icon = 'dashicons-clock';
               $status_color = '#46b450';
-              $row_style = 'background-color: #ecf7ed;';
+              $row_style = '';
             } elseif($is_past && !$is_start){
               $status = 'SCADUTO';
+              $status_icon = 'dashicons-dismiss';
               $status_color = '#dc3232';
-              $row_style = 'background-color: #f9e9e9;';
+              $row_style = '';
             } else {
               $status = 'PROGRAMMATO';
+              $status_icon = 'dashicons-calendar-alt';
               $status_color = '#00a0d2';
-              $row_style = 'background-color: #e5f5fa;';
+              $row_style = '';
             }
 
             $event_type = $is_start ? 'Inizio cambio' : 'Fine cambio';
+            $event_icon = $is_start ? 'dashicons-arrow-up-alt' : 'dashicons-arrow-down-alt';
             $operation_type = isset($event['args'][1]) && $event['args'][1] === 'inc' ? 'Incremento' : 'Decremento';
+            $operation_icon = isset($event['args'][1]) && $event['args'][1] === 'inc' ? '📈' : '📉';
             $value_type = isset($event['args'][3]) && $event['args'][3] === 'percentage' ? '%' : '€';
             $value = isset($event['args'][2]) ? $event['args'][2] . ' ' . $value_type : 'N/A';
             $products = isset($event['args'][0]) ? implode(', ', array_slice($event['args'][0], 0, 10)) : 'N/A';
-            if(isset($event['args'][0]) && count($event['args'][0]) > 10){
-              $products .= ' ... (+' . (count($event['args'][0]) - 10) . ' altri)';
+            $products_count = isset($event['args'][0]) ? count($event['args'][0]) : 0;
+            if($products_count > 10){
+              $products .= ' ... <em>(+' . ($products_count - 10) . ' altri)</em>';
             }
           ?>
           <tr style="<?php echo $row_style; ?>">
             <td>
-              <strong style="color: <?php echo $status_color; ?>;">
+              <span class="cron-status-badge cron-status-<?php echo strtolower(str_replace(' ', '-', $status)); ?>"
+                    style="background-color: <?php echo $status_color; ?>;">
+                <span class="dashicons <?php echo $status_icon; ?>"></span>
                 <?php echo $status; ?>
-              </strong>
+              </span>
             </td>
-            <td><?php echo $event_type; ?></td>
             <td>
-              <?php echo $date->format('d/m/Y H:i:s'); ?>
+              <span class="dashicons <?php echo $event_icon; ?>" style="color: <?php echo $status_color; ?>;"></span>
+              <?php echo $event_type; ?>
+            </td>
+            <td>
+              <strong><?php echo $date->format('d/m/Y H:i'); ?></strong>
               <?php if($is_past): ?>
-                <br><small style="color: #666;">(<?php echo human_time_diff($event['timestamp'], $now); ?> fa)</small>
+                <br><small class="cron-time-info" style="color: #999;">
+                  <span class="dashicons dashicons-backup" style="font-size: 13px; width: 13px; height: 13px;"></span>
+                  <?php echo human_time_diff($event['timestamp'], $now); ?> fa
+                </small>
               <?php else: ?>
-                <br><small style="color: #666;">(tra <?php echo human_time_diff($now, $event['timestamp']); ?>)</small>
+                <br><small class="cron-time-info" style="color: #999;">
+                  <span class="dashicons dashicons-clock" style="font-size: 13px; width: 13px; height: 13px;"></span>
+                  tra <?php echo human_time_diff($now, $event['timestamp']); ?>
+                </small>
               <?php endif; ?>
             </td>
-            <td><?php echo $operation_type; ?></td>
-            <td><?php echo $value; ?></td>
-            <td><small><?php echo $products; ?></small></td>
+            <td>
+              <span style="font-size: 18px; vertical-align: middle;"><?php echo $operation_icon; ?></span>
+              <?php echo $operation_type; ?>
+            </td>
+            <td>
+              <span class="cron-value-badge"><?php echo $value; ?></span>
+            </td>
+            <td>
+              <details>
+                <summary style="cursor: pointer; color: #2271b1;">
+                  <span class="dashicons dashicons-products" style="font-size: 16px; width: 16px; height: 16px;"></span>
+                  <strong><?php echo $products_count; ?></strong> prodott<?php echo $products_count === 1 ? 'o' : 'i'; ?>
+                </summary>
+                <div style="margin-top: 8px; padding: 8px; background: #f6f7f7; border-radius: 4px; font-size: 11px; font-family: monospace;">
+                  <?php echo $products; ?>
+                </div>
+              </details>
+            </td>
             <td>
               <form method="post" style="margin: 0;">
                 <?php wp_nonce_field('delete_cron_event', 'delete_nonce'); ?>
@@ -1029,7 +1119,9 @@ function setup_cron_manager_page(){
                 <input type="hidden" name="hook" value="<?php echo $event['hook']; ?>">
                 <input type="hidden" name="delete_event" value="1">
                 <button type="submit" class="button button-small button-link-delete"
+                        style="color: #d63638;"
                         onclick="return confirm('Eliminare questo evento?');">
+                  <span class="dashicons dashicons-trash" style="font-size: 14px; width: 14px; height: 14px;"></span>
                   Elimina
                 </button>
               </form>
@@ -1039,32 +1131,231 @@ function setup_cron_manager_page(){
         </tbody>
       </table>
 
-      <div class="tablenav bottom">
-        <div class="alignleft actions">
-          <span style="color: #666;">
-            Legenda:
-            <span style="color: #46b450;">●</span> In coda (futuro) |
-            <span style="color: #ffb900;">●</span> Attivo (passato, cambio applicato) |
-            <span style="color: #00a0d2;">●</span> Fine programmata |
-            <span style="color: #dc3232;">●</span> Fine scaduta
+      <div class="tablenav bottom" style="padding-top: 15px; border-top: 1px solid #ddd; margin-top: 20px;">
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+          <div style="font-weight: 600; color: #1d2327;">Legenda stati:</div>
+          <span class="cron-legend-item">
+            <span class="cron-status-badge cron-status-in-coda" style="background-color: #46b450;">
+              <span class="dashicons dashicons-clock"></span> IN CODA
+            </span>
+            <small>Evento futuro</small>
+          </span>
+          <span class="cron-legend-item">
+            <span class="cron-status-badge cron-status-attivo" style="background-color: #f0b849;">
+              <span class="dashicons dashicons-yes-alt"></span> ATTIVO
+            </span>
+            <small>Cambio applicato</small>
+          </span>
+          <span class="cron-legend-item">
+            <span class="cron-status-badge cron-status-programmato" style="background-color: #00a0d2;">
+              <span class="dashicons dashicons-calendar-alt"></span> PROGRAMMATO
+            </span>
+            <small>Fine futura</small>
+          </span>
+          <span class="cron-legend-item">
+            <span class="cron-status-badge cron-status-scaduto" style="background-color: #dc3232;">
+              <span class="dashicons dashicons-dismiss"></span> SCADUTO
+            </span>
+            <small>Da eseguire</small>
           </span>
         </div>
       </div>
 
     <?php else: ?>
-      <div class="notice notice-info">
-        <p>Non ci sono eventi schedulati per il plugin WC Price Changer.</p>
+      <div class="notice notice-info" style="margin-top: 20px;">
+        <p style="display: flex; align-items: center; gap: 10px; margin: 12px 0;">
+          <span class="dashicons dashicons-info" style="color: #72aee6; font-size: 20px; width: 20px; height: 20px;"></span>
+          <span>Non ci sono eventi schedulati per il plugin WC Price Changer.</span>
+        </p>
       </div>
     <?php endif; ?>
 
   </div>
 
   <style>
-  .wp-list-table th {
-    font-weight: 600;
+  /* Container principale */
+  .wc-price-changer-cron {
+    max-width: 1400px;
   }
-  .wp-list-table td {
-    vertical-align: middle;
+
+  .wc-price-changer-cron .wp-heading-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  /* Statistiche */
+  .cron-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cron-stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #1d2327;
+  }
+
+  .cron-stat-badge .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #50575e;
+  }
+
+  /* Tabella eventi */
+  .wc-cron-table {
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  }
+
+  .wc-cron-table thead th {
+    background: #f6f7f7;
+    border-bottom: 1px solid #c3c4c7;
+    font-weight: 600;
+    color: #1d2327;
+    padding: 12px 10px;
+    text-align: left !important;
+  }
+
+  .wc-cron-table tbody tr {
+    transition: background-color 0.2s;
+  }
+
+  .wc-cron-table tbody tr:hover {
+    background-color: #f6f7f7;
+  }
+
+  .wc-cron-table td {
+    vertical-align: middle !important;
+    padding: 12px 10px;
+    text-align: left !important;
+  }
+
+  /* Badge stato */
+  .cron-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: white !important;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    max-width: fit-content;
+  }
+
+  .cron-status-badge .dashicons {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    line-height: 14px !important;
+    margin: 0 !important;
+  }
+
+  /* Badge valore */
+  .cron-value-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1d2327;
+  }
+
+  /* Info tempo */
+  .cron-time-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+  }
+
+  /* Legenda */
+  .cron-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cron-legend-item small {
+    color: #646970;
+    font-size: 12px;
+  }
+
+  /* Details prodotti */
+  details summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 5px;
+    transition: transform 0.2s;
+  }
+
+  details[open] summary::before {
+    transform: rotate(90deg);
+  }
+
+  details[open] summary {
+    margin-bottom: 8px;
+  }
+
+  /* Pulsanti */
+  .button .dashicons,
+  button .dashicons {
+    vertical-align: middle !important;
+    margin-top: 0 !important;
+    line-height: 1 !important;
+  }
+
+  .button-link-delete .dashicons {
+    vertical-align: middle !important;
+    margin-right: 3px;
+  }
+
+  /* Responsive */
+  @media screen and (max-width: 782px) {
+    .cron-stats {
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .tablenav.top > div {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .wc-cron-table {
+      font-size: 12px;
+    }
+
+    .cron-status-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+    }
   }
   </style>
   <?php

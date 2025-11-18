@@ -3,12 +3,100 @@
   border-collapse: collapse;
   margin-bottom: 20px;
   padding-left: 10px;
+  border: 1px solid #c3c4c7;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
+
+.table-jobs thead {
+  background: #f6f7f7;
+}
+
+.table-jobs th {
+  padding: 12px 10px;
+  text-align: left !important;
+  font-weight: 600;
+  border-bottom: 1px solid #c3c4c7;
+}
+
+.table-jobs td {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f1;
+  text-align: left !important;
+}
+
+.table-jobs tr:last-child td {
+  border-bottom: none;
+}
+
 .div-table-jobs-active{
   max-height: 500px !important;
+  overflow: auto;
+  margin-top: 15px;
+  border-radius: 4px;
 }
+
 .div-table-jobs-hidden{
   max-height: 0px;
   overflow: hidden;
-  transition: all 0.7s ease;
+  transition: all 0.4s ease;
+}
+
+/* Notice migliorati */
+.wc-price-notice {
+  border-left-width: 4px;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.wc-price-notice p {
+  font-size: 14px;
+}
+
+/* Tabella eventi nella pagina principale */
+.wc-events-table {
+  background: white;
+}
+
+.wc-events-table thead tr {
+  background: #f6f7f7 !important;
+}
+
+.wc-events-table thead th {
+  color: #1d2327 !important;
+  font-weight: 600 !important;
+}
+
+.wc-events-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.wc-events-table tbody tr:hover {
+  background-color: #f9f9f9 !important;
+}
+
+.wc-events-table td {
+  color: #1d2327;
+  line-height: 1.5;
+}
+
+.event-badge {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Pulsante visualizza attività */
+#link-activities {
+  display: inline-block;
+  margin-top: 10px;
+}
+
+/* Migliorie generali */
+.wrap h1 {
+  margin-bottom: 20px;
+}
+
+/* Fix dashicons alignment globale */
+.dashicons {
+  vertical-align: middle !important;
 }
