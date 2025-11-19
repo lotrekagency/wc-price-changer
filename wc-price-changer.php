@@ -6,8 +6,7 @@
  * Author:            Lotrèk
  * Author URI:        https://lotrek.it/
  */
-?>
-<?php
+
 init_plugin();
 
 function init_plugin(){
@@ -450,10 +449,10 @@ function setup_price_changer($type){
       <tr>
       <td>
       <label for="choice">Tipo di modifica</label><br>
-      <input type="radio" name="choice" value="dec" <? if($_POST['choice'] == 'dec' or !isset($_POST['choice'])){ echo 'checked'; } ?>>Decremento</input>
+      <input type="radio" name="choice" value="dec" <?php if($_POST['choice'] == 'dec' or !isset($_POST['choice'])){ echo 'checked'; } ?>>Decremento</input>
       </td>
       <td>
-      <br><input type="radio" name="choice" value="inc" <? if($_POST['choice'] == 'inc'){ echo 'checked'; } ?>>Incremento</input>
+      <br><input type="radio" name="choice" value="inc" <?php if($_POST['choice'] == 'inc'){ echo 'checked'; } ?>>Incremento</input>
       </td>
       </tr>
 
@@ -854,6 +853,9 @@ function setup_cron_manager_page(){
   if(isset($_POST['run_due_crons'])){
     $executed = 0;
     $crons = _get_cron_array();
+    if(!is_array($crons)){
+      $crons = array();
+    }
     $now = time();
 
     foreach($crons as $timestamp => $hooks){
@@ -896,6 +898,9 @@ function setup_cron_manager_page(){
     $timestamp = intval($_POST['timestamp']);
     $hook = sanitize_text_field($_POST['hook']);
     $crons = _get_cron_array();
+    if(!is_array($crons)){
+      $crons = array();
+    }
     if(isset($crons[$timestamp][$hook])){
       unset($crons[$timestamp][$hook]);
       if(empty($crons[$timestamp])){
@@ -908,6 +913,9 @@ function setup_cron_manager_page(){
 
   if(isset($_POST['clear_all_events'])){
     $crons = _get_cron_array();
+    if(!is_array($crons)){
+      $crons = array();
+    }
     $cleared = 0;
     foreach($crons as $timestamp => $hooks){
       foreach($hooks as $hook => $events){
@@ -926,6 +934,9 @@ function setup_cron_manager_page(){
 
   // Recupera eventi cron
   $crons = _get_cron_array();
+  if(!is_array($crons)){
+    $crons = array();
+  }
   $plugin_events = array();
 
   foreach($crons as $timestamp => $hooks){
@@ -1016,7 +1027,7 @@ function setup_cron_manager_page(){
       <table class="wp-list-table widefat fixed striped wc-cron-table">
         <thead>
           <tr>
-            <th style="width: 100px;">Stato</th>
+            <th >Stato</th>
             <th style="width: 120px;">Tipo Evento</th>
             <th style="width: 150px;">Data e Ora</th>
             <th style="width: 120px;">Operazione</th>
@@ -1165,10 +1176,15 @@ function setup_cron_manager_page(){
       </div>
 
     <?php else: ?>
-      <div class="notice notice-info" style="margin-top: 20px;">
-        <p style="display: flex; align-items: center; gap: 10px; margin: 12px 0;">
-          <span class="dashicons dashicons-info" style="color: #72aee6; font-size: 20px; width: 20px; height: 20px;"></span>
-          <span>Non ci sono eventi schedulati per il plugin WC Price Changer.</span>
+      <div class="wc-cron-empty-state">
+        <div class="wc-cron-empty-icon">
+          <span class="dashicons dashicons-calendar-alt"></span>
+        </div>
+        <h2>Nessun evento programmato</h2>
+        <p>Al momento non ci sono eventi di cambio prezzo programmati o attivi.</p>
+        <p class="wc-cron-empty-hint">
+          <span class="dashicons dashicons-info-outline" style="font-size: 16px; width: 16px; height: 16px;"></span>
+          Puoi creare nuovi eventi dalla pagina <strong>WC Price Changer</strong>
         </p>
       </div>
     <?php endif; ?>
@@ -1337,6 +1353,65 @@ function setup_cron_manager_page(){
     margin-right: 3px;
   }
 
+  /* Empty State */
+  .wc-cron-empty-state {
+    background: white;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 60px 40px;
+    text-align: center;
+    margin-top: 30px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  }
+
+  .wc-cron-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #f0f0f1 0%, #e5e5e5 100%);
+    border-radius: 50%;
+    margin-bottom: 24px;
+  }
+
+  .wc-cron-empty-icon .dashicons {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #50575e;
+  }
+
+  .wc-cron-empty-state h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1d2327;
+    margin: 0 0 12px 0;
+  }
+
+  .wc-cron-empty-state p {
+    font-size: 14px;
+    color: #646970;
+    margin: 0 0 8px 0;
+    line-height: 1.6;
+  }
+
+  .wc-cron-empty-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px !important;
+    padding: 12px 20px;
+    background: #f6f7f7;
+    border-radius: 6px;
+    font-size: 13px !important;
+    color: #1d2327 !important;
+  }
+
+  .wc-cron-empty-hint .dashicons {
+    color: #2271b1;
+  }
+
   /* Responsive */
   @media screen and (max-width: 782px) {
     .cron-stats {
@@ -1358,6 +1433,25 @@ function setup_cron_manager_page(){
     .cron-status-badge {
       font-size: 10px;
       padding: 3px 8px;
+    }
+
+    .wc-cron-empty-state {
+      padding: 40px 20px;
+    }
+
+    .wc-cron-empty-icon {
+      width: 60px;
+      height: 60px;
+    }
+
+    .wc-cron-empty-icon .dashicons {
+      font-size: 30px;
+      width: 30px;
+      height: 30px;
+    }
+
+    .wc-cron-empty-state h2 {
+      font-size: 20px;
     }
   }
   </style>
