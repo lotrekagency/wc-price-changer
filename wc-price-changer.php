@@ -58,7 +58,8 @@ function setup_menu(){
         $products = $variations;
       }
       if ( $products ) {
-        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], get_option('wc_price_changer_submit_type', ''), isset($_POST['enable_translations']));
+        $enable_translations = isset($_POST['enable_translations']) ? true : false;
+        $action_args = array($products, $_POST['choice'], (float) $_POST['value'], get_option('wc_price_changer_submit_type', ''), $enable_translations);
         if($_POST['datetime-start']){
           $datetime_start = new DateTime($_POST['datetime-start'], new DateTimeZone('Europe/Berlin'));
           wp_schedule_single_event($datetime_start->format('U'), 'action_change_prices', $action_args);
@@ -69,7 +70,8 @@ function setup_menu(){
           add_action( 'admin_notices', 'action_notice_schedule_change' );
         }
         else{
-          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], get_option('wc_price_changer_submit_type', ''), isset($_POST['enable_translations']));
+          $enable_translations_direct = isset($_POST['enable_translations']) ? true : false;
+          do_action('action_change_prices', $products, $_POST['choice'], (float)$_POST['value'], get_option('wc_price_changer_submit_type', ''), $enable_translations_direct);
           add_action( 'admin_notices', 'action_notice_direct_change' );
         }
       } else {
