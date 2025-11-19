@@ -703,7 +703,7 @@ function action_notice_schedule_change() {
 
 function construct_queue_table() {
   ?>
-  <div id="div-table-jobs" class="div-table-jobs-hidden">
+  <div id="div-table-jobs" class="div-table-jobs-hidden div-table-jobs-active">
       <table class="table-jobs wc-events-table">
         <thead>
           <tr>
@@ -782,14 +782,19 @@ function construct_queue_table() {
 
 function notice_queue_jobs() {
   ?>
-  <div id="can-view-activities" class="notice notice-success wc-price-notice">
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-      <span class="dashicons dashicons-clock" style="font-size: 24px; width: 24px; height: 24px; color: #4ab866;"></span>
-      <p style="margin: 0; font-weight: 600;">Ci sono eventi di cambio prezzi in coda.</p>
+  <div id="can-view-activities" class="wc-price-events-card wc-events-queue">
+    <div class="wc-events-header">
+      <div class="wc-events-icon">
+        <span class="dashicons dashicons-clock"></span>
+      </div>
+      <div class="wc-events-title">
+        <h3>Eventi in coda</h3>
+        <p>Ci sono cambi di prezzo programmati</p>
+      </div>
     </div>
     <?php construct_queue_table(); ?>
-    <button type="button" id="link-activities" class="button button-small" onclick="startAnimation()" style="margin-top: 10px;">
-      Visualizza tutte le attività
+    <button type="button" id="link-activities" class="button button-primary" onclick="startAnimation()" style="margin-top: 15px;">
+      Nascondi tutte le attività
     </button>
   </div>
   <script>
@@ -806,14 +811,19 @@ function notice_queue_jobs() {
 
 function notice_active_jobs() {
   ?>
-  <div class="notice notice-warning wc-price-notice">
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-      <span class="dashicons dashicons-warning" style="font-size: 24px; width: 24px; height: 24px; color: #f0b849;"></span>
-      <p style="margin: 0; font-weight: 600;">Ci sono cambi di prezzo attivi.</p>
+  <div class="wc-price-events-card wc-events-active">
+    <div class="wc-events-header">
+      <div class="wc-events-icon">
+        <span class="dashicons dashicons-warning"></span>
+      </div>
+      <div class="wc-events-title">
+        <h3>Eventi attivi</h3>
+        <p>Ci sono cambi di prezzo già applicati</p>
+      </div>
     </div>
     <?php construct_queue_table(); ?>
-    <button type="button" id="link-activities" class="button button-small" onclick="startAnimation()" style="margin-top: 10px;">
-      Visualizza tutte le attività
+    <button type="button" id="link-activities" class="button button-primary" onclick="startAnimation()" style="margin-top: 15px;">
+      Nascondi tutte le attività
     </button>
   </div>
   <script>
@@ -825,6 +835,22 @@ function notice_active_jobs() {
     element.textContent = isVisible ? 'Nascondi tutte le attività' : 'Visualizza tutte le attività';
   }
   </script>
+  <?php
+}
+
+function notice_no_events() {
+  ?>
+  <div class="wc-price-events-card wc-events-empty">
+    <div class="wc-events-header">
+      <div class="wc-events-icon">
+        <span class="dashicons dashicons-yes-alt"></span>
+      </div>
+      <div class="wc-events-title">
+        <h3>Nessun evento attivo</h3>
+        <p>Non ci sono cambi di prezzo programmati</p>
+      </div>
+    </div>
+  </div>
   <?php
 }
 
@@ -842,6 +868,9 @@ function check_active_jobs($active_jobs, $queue_jobs) {
   }
   else if ( $active_jobs ) {
     notice_active_jobs();
+  }
+  else {
+    notice_no_events();
   }
 }
 

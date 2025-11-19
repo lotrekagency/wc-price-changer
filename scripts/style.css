@@ -100,3 +100,85 @@
 .dashicons {
   vertical-align: middle !important;
 }
+
+/* Card Eventi Personalizzate */
+.wc-price-events-card {
+  background: white;
+  border: 1px solid #c3c4c7;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.wc-events-queue {
+  border-left: 4px solid #46b450;
+}
+
+.wc-events-active {
+  border-left: 4px solid #f0b849;
+}
+
+.wc-events-empty {
+  border-left: 4px solid #72aee6;
+}
+
+.wc-events-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.wc-events-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.wc-events-queue .wc-events-icon {
+  background: linear-gradient(135deg, #daf1dc 0%, #c5e8c8 100%);
+}
+
+.wc-events-active .wc-events-icon {
+  background: linear-gradient(135deg, #fff1cc 0%, #ffe8a1 100%);
+}
+
+.wc-events-empty .wc-events-icon {
+  background: linear-gradient(135deg, #e5f5fa 0%, #cceaf5 100%);
+}
+
+.wc-events-icon .dashicons {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.wc-events-queue .wc-events-icon .dashicons {
+  color: #46b450;
+}
+
+.wc-events-active .wc-events-icon .dashicons {
+  color: #f0b849;
+}
+
+.wc-events-empty .wc-events-icon .dashicons {
+  color: #72aee6;
+}
+
+.wc-events-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d2327;
+}
+
+.wc-events-title p {
+  margin: 0;
+  font-size: 14px;
+  color: #646970;
+}
